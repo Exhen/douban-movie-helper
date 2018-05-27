@@ -1,7 +1,7 @@
 // ==UserScript==
 // @id             exhen32@live.com
 // @name           豆瓣电影助手|douban movie helper
-// @description    豆瓣电影助手|电影黑名单|PT资源搜索链接|更多评分|字幕搜索|增加查看原图链接|增加IMDB top 250标签|一键生成简介|在changhw版本基础上修改，增加pt站搜索，去除垃圾视频站。自用脚本，代码粗糙，欢迎捉虫。
+// @description    【重新定义豆瓣脚本，东半球最好的豆瓣电影增强脚本】10秒搞定豆瓣电影资源下载|豆瓣电影助手|电影黑名单：屏蔽你不想看的烂片|PT资源搜索链接|更多评分|字幕搜索|支持影人作品集批量搜索|增加查看原图链接|增加IMDB top 250标签|一键生成简介|在changhw版本基础上修改，增加pt站搜索，去除垃圾视频站。|感谢R酱、白鸽男孩| 自用脚本，代码粗糙，欢迎捉虫。
 // @author         Exhen
 // @connect        *
 // @grant          GM_xmlhttpRequest
@@ -17,7 +17,8 @@
 // @resource       icon_on https://raw.githubusercontent.com/Exhen/douban-movie-helper/master/on.png
 // @include        https://movie.douban.com/
 // @match          https://movie.douban.com/*
-// @version        2018042901
+// @exclude        https://*/follows_comments
+// @version        2018052501
 // @run-at         document-start
 // @namespace      exhen_js 
 
@@ -29,21 +30,474 @@ document.getElementsByTagName("head")[0].appendChild(myScriptStyle);
 var aside_html = '<div class=c-aside > <h2><i class="">四字标题</i>· · · · · · </h2> <div class=c-aside-body  style="padding: 0 12px;"> <ul class=bs > </ul> </div> </div>';
 var imdb_html = '<div class="rating_wrap clearbox rating_imdb" rel="v:rating" style="padding-top: 0;"> <div class=rating_logo >IMDB 评分</div> <div class="rating_self clearfix" typeof="v:Rating"> <strong class="ll rating_num" property="v:average">0</strong> <span property="v:best" content=10.0 ></span> <div class="rating_right "> <div class=ll ></div> <div class=rating_sum > <a href=collections  class=rating_people ><span property="v:votes">0</span>人评价</a> </div> </div> </div> </div>';
 var sites_list = {
-    "ptsites": {
+    "ptsite": {
         "name": "PT资源",
         "sites": {
-            "BYR": {
-                "imdb": "https://bt.byr.cn/torrents.php?incldead=0&search_area=4&search=",
-                "title": "https://bt.byr.cn/torrents.php?incldead=0&search="
+            "ADC": {
+                "imdb": "http://asiandvdclub.org/browse.php?descr=1&btnSubmit=Search%21&search=tt",
+                "title": "http://asiandvdclub.org/browse.php?descr=1&btnSubmit=Search%21&search=",
+                "selector": "table.torrenttable:last > tbody > tr"
+            },
+            "AHD": {
+                "imdb": "https://awesome-hd.me/torrents.php?searchstr=tt",
+                "title": "https://awesome-hd.me/torrents.php?searchstr=",
+                "selector": "table.torrent_table:last > tbody > tr:gt(0)"
+            },
+            "BTSchool": {
+                "imdb": "http://pt.btschool.net/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "http://pt.btschool.net/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "BYRBT": {
+                "imdb": "https://bt.byr.cn/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "https://bt.byr.cn/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "CCFBits": {
+                "imdb": "http://www.ccfbits.org/browse.php?fullsearch=1&notnewword=1&search=",
+                "title": "http://www.ccfbits.org/browse.php?fullsearch=1&notnewword=1&search=",
+                "selector": "table.mainouter > tbody > tr:last > td > table:nth-child(10) > tbody > tr:gt(0)"
+            },
+            "CHDBits": {
+                "imdb": "https://chdbits.co/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "https://chdbits.co/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "CMCT": {
+                "imdb": "https://hdcmct.org/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "https://hdcmct.org/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "GZTown": {
+                "imdb": "https://pt.gztown.net/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "https://pt.gztown.net/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "HD4FANS": {
+                "imdb": "https://pt.hd4fans.org/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "https://pt.hd4fans.org/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "HDBits": {
+                "imdb": "https://hdbits.org/browse.php?&imdb=tt",
+                "title": "https://hdbits.org/browse.php?&search=",
+                "selector": "table#torrent-list:last > tbody > tr:gt(0)"
+            },
+            "HDChina": {
+                "imdb": "https://hdchina.org/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "https://hdchina.org/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search=",
+                "selector": "table.torrent_list:last > tbody > tr:gt(0)"
+            },
+            "HDCity": {
+                "imdb": "https://hdcity.city/pt?incldead=0&search_area=1&notnewword=1&iwannaseethis=",
+                "title": "https://hdcity.city/pt?incldead=0&notnewword=1&iwannaseethis=",
+                "selector": "center > div > div > div.text"
+            },
+            "HDHome": {
+                "imdb": "https://hdhome.org/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "https://hdhome.org/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "HDSky": {
+                "imdb": "https://hdsky.me/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "https://hdsky.me/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "HDSpace": {
+                "imdb": "https://hd-space.org/index.php?page=torrents&active=0&options=2&search=",
+                "title": "https://hd-space.org/index.php?page=torrents&active=0&search=",
+                "selector": "table.lista:last > tbody > tr:gt(0)"
+            },
+            "HDStreet": {
+                "imdb": "https://hdstreet.club/index.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "https://hdstreet.club/index.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "HDT": {
+                "imdb": "https://hd-torrents.org/torrents.php?active=0&options=2&search=",
+                "title": "https://hd-torrents.org/torrents.php?active=0&search=",
+                "selector": "table.mainblockcontenttt:last > tbody > tr:gt(2)"
+            },
+            "HDTime": {
+                "imdb": "https://hdtime.org/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "https://hdtime.org/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "HDU": {
+                "imdb": "http://pt.upxin.net/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "http://pt.upxin.net/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
             },
             "HUDBT": {
-                "imdb": "https://hudbt.hust.edu.cn/torrents.php?incldead=1&search_area=4&search=",
-                "title": "https://hudbt.hust.edu.cn/torrents.php?incldead=1&search=",
-                "torrent_table_selector":"table.torrents:last > tbody > tr"
+                "imdb": "https://hudbt.hust.edu.cn/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "http://hudbt.hust.edu.cn/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "Hyperay": {
+                "imdb": "https://hyperay.org/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "http://hyperay.org/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search=",
+                "selector": "table.torrents > tbody > tr.nonstick_outer_bg"
+            },
+            "IPT": {
+                "imdb": "https://iptorrents.com/t?q=tt",
+                "title": "https://iptorrents.com/t?q=",
+                "selector": "#torrents td.ac"
+            },
+            "JoyHD": {
+                "imdb": "https://www.joyhd.net/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "http://www.joyhd.net/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "KeepFrds": {
+                "imdb": "https://pt.keepfrds.com/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "https://pt.keepfrds.com/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "KG": {
+                "imdb": "https://karagarga.in/browse.php?search_type=imdb&search=",
+                "selector": "table#browse:last > tbody > tr:gt(0)"
+            },
+            "MTeam": {
+                "imdb": "https://tp.m-team.cc/movie.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "https://tp.m-team.cc/movie.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "NPUPT": {
+                "imdb": "https://npupt.com/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&sort=10&imdb=tt",
+                "title": "https://npupt.com/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&sort=10&search=",
+                "selector": "#torrents_table > tbody > tr:gt(0)"
+            },
+            "NWSUAF": {
+                "imdb": "https://pt.nwsuaf6.edu.cn/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "https://pt.nwsuaf6.edu.cn/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "NYPT": {
+                "imdb": "https://nanyangpt.com/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "https://nanyangpt.com/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search=",
+                "selector": "table.torrents:last > tbody > tr"
+            },
+            "Ourbits": {
+                "imdb": "https://ourbits.club/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "https://ourbits.club/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "OurDiSC": {
+                "title": "http://bt.ourdisc.net/browse.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "selector": "table[width='100%'][border='0'][cellspacing='0'][cellpadding='10'] i"
+            },
+            "PlayPT": {
+                "imdb": "http://pt.playpt123.org/play.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "http://pt.playpt123.org/play.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "PTP": {
+                "imdb": "https://passthepopcorn.me/torrents.php?searchstr=tt",
+                "title": "https://passthepopcorn.me/torrents.php?searchstr=",
+                "selector": "table.torrent_table:last > tbody > tr:gt(0)"
+            },
+            "SC": {
+                "imdb": "https://secret-cinema.pw/torrents.php?cataloguenumber=tt",
+                "title": "https://secret-cinema.pw/torrents.php?groupname=",
+                "selector": "div.torrent_card"
+            },
+            "SJTU": {
+                "imdb": "https://pt.sjtu.edu.cn/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "https://pt.sjtu.edu.cn/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search=",
+                "selector": "table.torrents:last > tbody > tr"
+            },
+            "SS": {
+                "title": "https://skyeysnow.com/forum.php?mod=torrents&notnewword=1&search=",
+                "selector": "table.torrents > tbody > tr:gt(0)"
+            },
+            "TCCF": {
+                "imdb": "http://et8.org/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "https://et8.org/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "Tik": {
+                "imdb": "https://www.cinematik.net/browse.php?incldead=0&sort=1&type=asc&srchdtls=1&search=tt",
+                "selector": "table[cellpadding]:last > tbody > tr:gt(0)"
+            },
+            "TLFBits": {
+                "imdb": "http://pt.eastgame.org/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "http://pt.eastgame.org/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
+            },
+            "TorViet": {
+                "imdb": "http://torviet.com/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "http://torviet.com/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search="
             },
             "TTG": {
-                "title": "https://totheglory.im/browse.php?search_field=",
-                "torrent_table_selector":"table#torrent_table:last > tbody > tr:gt(0)"
+                "title": "https://totheglory.im/browse.php?c=M&notnewword=1&search_field=",
+                "selector": "table#torrent_table:last > tbody > tr:gt(0)"
+            },
+            "U2": {
+                "title": "https://u2.dmhy.org/torrents.php?incldead=1&search_area=0&notnewword=1&search="
+            },
+            "WHUPT": {
+                "imdb": "https://pt.whu.edu.cn/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=4&search_mode=2&search=",
+                "title": "https://pt.whu.edu.cn/torrents.php?&incldead=0&spstate=0&inclbookmarked=0&search_area=0&search_mode=0&search=",
+                "selector": "table.torrents:last > tbody > tr"
+            },
+            "ZX": {
+                "title": "http://pt.zhixing.bjtu.edu.cn/search/x",
+                "selector": "table.torrenttable > tbody > tr:gt(1)"
+            },
+            "UHD": {
+                "imdb": "https://uhdbits.org/torrents.php?searchstr=tt",
+                "title": "https://uhdbits.org/torrents.php?searchstr=",
+                "selector": "table.torrent_table:last > tbody > tr:gt(0)"
+            }
+        }
+    },
+    "subsite": {
+        "name": "字幕资源",
+        "sites": {
+            "字幕库": {
+                "title": "http://www.zimuku.cn/search?q=",
+                "selector": "div.box.clearfix div.item.prel.clearfix"
+            },
+            "字幕天堂": {
+                "title": "http://www.zimuku.cn/search?q=",
+                "selector": "div.box.clearfix div.item.prel.clearfix"
+            },
+            "字幕组": {
+                "title": "http://www.zimuzu.tv/search/index?type=subtitle&keyword=",
+                "selector": ".search-result li"
+            },
+            "sub HD": {
+                "title": "http://subhd.com/search/",
+                "selector": "div.col-md-9 div.box"
+            },
+            "伪射手": {
+                "title": "http://assrt.net/sub/?searchword=",
+                "selector": "div.body div.subitem"
+            },
+            "163字幕": {
+                "title": "http://www.163sub.com/Search?id=",
+                "selector": "#main_narrow_bd div.subs_list"
+            },
+            "电波字幕": {
+                "title": "http://dbfansub.com/?s=",
+                "selector": "div.panel-body article.panel.panel-default.archive"
+            },
+            "字幕社": {
+                "title": "https://www.zimushe.com/search.php?keywords=",
+                "selector": "div.wrap-l li"
+            },
+            "中文字幕网": {
+                "title": "http://www.zimuzimu.com/so_zimu.php?title=",
+                "selector": "table.sublist a.othersub"
+            },
+            "r3sub": {
+                "title": "https://r3sub.com/search.php?s=",
+                "selector": "div.col-sm-8.col-md-9.col-lg-8 div.movie.movie--preview.ddd"
+            },
+            "HDZIMU": {
+                "title": "http://www.hdzimu.com/?s=",
+                "selector": "div.post-warp div.post-box"
+            },
+            "M1080": {
+                "title": "http://zimu.m1080.com/search.asp?a=&s=",
+                "selector": "table td"
+            },
+            "OpenSub": {
+                "title": "https://www.opensubtitles.org/zh/search/sublanguageid-chi,zht,zhe,eng/imdbid-",
+                "selector": "#search_results tr.change"
+            },
+            "Addic7ed": {
+                "title": "http://www.addic7ed.com/search.php?search=",
+                "selector": "table.tabel tr"
+            },
+            "Podnapisi": {
+                "title": "https://www.podnapisi.net/zh/subtitles/search/?language=zh&language=en&keywords=",
+                "selector": "table tr.subtitle-entry"
+            },
+            "Subscene": {
+                "title": "https://subscene.com/subtitles/release?r=true&q=",
+                "selector": "table td.a1"
+            },
+            "TVsubs": {
+                "title": "http://tvsubs.net/search.php?q=",
+                "selector": "div.cont li"
+            },
+            "TVsubtitles": {
+                "title": "http://www.tvsubtitles.net/search.php?q=",
+                "selector": "div.left_articles li"
+            },
+            "YIFY": {
+                "title": "http://www.yifysubtitles.com/search?q=",
+                "selector": "div.col-sm-12 div.col-xs-12"
+            }
+        }
+    },
+    "offlinesite": {
+        "name": "公网资源",
+        "sites": {
+            "52 Movie": {
+                "title": "http://www.52movieba.com/search.htm?keyword=",
+                "selector": "table.table.table-hover.threadlist tr.thread.tap"
+            },
+            "97电影网": {
+                "title": "http://www.id97.com/search?q=",
+                "selector": "div.container div.col-xs-7"
+            },
+            "爱下电影网": {
+                "title": "http://www.aixia.cc/plus/search.php?searchtype=titlekeyword&q=",
+                "selector": "div.con li"
+            },
+            "比特大雄": {
+                "title": "https://www.btdx8.com/?s=",
+                "selector": "#content div.post.clearfix"
+            },
+            "比特影视": {
+                "title": "https://www.bteye.com/search/",
+                "selector": "#main div.item"
+            },
+            "电影巴士": {
+                "title": "http://www.dy8c.com/?s=",
+                "selector": "#content div.post-box"
+            },
+            "电影首发站": {
+                "title": "http://www.dysfz.cc/key/",
+                "selector": ".movie-list li"
+            },
+            "嘎嘎影视": {
+                "title": "http://www.gagays.xyz/movie/search?req%5Bkw%5D=",
+                "selector": "#movie-sub-cont-db div.large-movie-detail"
+            },
+            "高清MP4": {
+                "title": "http://www.99tvs.com/?s=",
+                "selector": "#post_container li"
+            },
+            "高清电台": {
+                "title": "https://gaoqing.fm/s.php?q=",
+                "selector": "#result1 div.row"
+            },
+            "高清控": {
+                "title": "http://www.gaoqingkong.com/?s=",
+                "selector": "#post_container div.post_hover"
+            },
+            "蓝光网": {
+                "title": "http://www.languang.co/?s=",
+                "selector": "div.mi_cont li"
+            },
+            "迷你MP4": {
+                "title": "http://www.minimp4.com/search?q=",
+                "selector": "div.container div.col-xs-7"
+            },
+            "胖鸟电影": {
+                "title": "http://www.pniao.com/Mov/so/",
+                "selector": "div.mainContainer div.movieFlag.eachOne"
+            },
+            "人生05": {
+                "title": "http://www.rs05.com/search.php?s=",
+                "selector": "#movielist li"
+            },
+            "云播网": {
+                "title": "http://www.yunbowang.cn/index.php?m=vod-search&wd=",
+                "selector": "div.container div.col-xs-7"
+            },
+            "中国高清网": {
+                "title": "http://gaoqing.la/?s=",
+                "selector": "div.mainleft div.post_hover"
+            },
+            "最新影视站": {
+                "title": "http://www.zxysz.com/?s=",
+                "selector": "#content li.p-item"
+            },
+            "人人影视": {
+                "title": "http://www.zimuzu.tv/search?type=resource&keyword=",
+                "selector": "div.search-result > ul > li"
+            },
+            "人人美剧": {
+                "title": "http://www.yyetss.com/Search/index/s_keys/",
+                "selector": "div.row div.col-xs-3"
+            },
+            "天天美剧": {
+                "title": "http://www.ttmeiju.vip/index.php/search/index.html?keyword=",
+                "selector": "table.latesttable tr.Scontent1"
+            },
+            "爱美剧": {
+                "title": "https://22v.net/search/",
+                "selector": "div.movie span"
+            },
+            "天天看美剧": {
+                "title": "http://www.msj1.com/?s=",
+                "selector": "div.cat_list div.art_show_top"
+            },
+            "美剧粉": {
+                "title": "http://www.itvfans.com/?s=",
+                "selector": "#main-wrap-left div.home-blog-entry-text"
+            },
+            "BT吧": {
+                "title": "http://www.btba.com.cn/search?keyword=",
+                "selector": "div.left li"
+            },
+            "BT蚂蚁": {
+                "title": "https://www.btmyi.com/search.html?kw=",
+                "selector": "div.row h5.item-title"
+            },
+            "BT天堂": {
+                "title": "http://www.bttt.la/s.php?q=",
+                "selector": "div.ml div.title"
+            },
+            "BT之家": {
+                "title": "http://www.btbtt.co/search-index-keyword-",
+                "selector": "#threadlist table"
+            },
+            "RARBT": {
+                "title": "http://www.rarbt.com/index.php/search/index.html?search=",
+                "selector": "div.ml div.title"
+            },
+            "查片源": {
+                "title": "https://www.chapianyuan.com/?keyword=",
+                "selector": "div.block li"
+            },
+            "磁力猫": {
+                "title": "http://www.cilimao.me/search?word=",
+                "selector": "#Search__content_left___2MajJ div.MovieCard__content___3kv1W"
+            },
+            "磁力站": {
+                "title": "http://oabt004.com/index/index?c=&k=",
+                "selector": "div.link-list-wrapper ul.link-list"
+            },
+            "光影资源": {
+                "title": "http://www.etdown.net/index.php?keyword=",
+                "selector": "tbody.list_4 tr"
+            },
+            "我爱P2P": {
+                "title": "http://www.woaip2p.net/topic/list?categoryId=0&title=",
+                "selector": "tbody td.word-break"
+            },
+            "小浣熊下载": {
+                "title": "https://www.xiaohx.org/search?key=",
+                "selector": "div.search_right li"
+            },
+            "一站搜": {
+                "title": "http://v.yizhansou.com/search?kw=",
+                "selector": "table td.st"
+            },
+            "1337X": {
+                "title": "https://1337x.to/search/",
+                "selector": "table.table-list.table.table-responsive.table-striped td.coll-1.name"
+            },
+            "BT-Scene": {
+                "title": "https://bt-scene.cc/results_.php?q=",
+                "selector": "table.tor td.tname"
+            },
+            "iDope": {
+                "title": "https://idope.se/torrent-list/",
+                "selector": "#div2child div.resultdiv"
+            },
+            "ISOHunt": {
+                "title": "https://isohunt2.net/torrent/?ihq=",
+                "selector": "#serps td.title-row"
+            },
+            "KickAss": {
+                "title": "https://katcr.co/katsearch/page/1/",
+                "selector": "div.table--responsive_vertical div.torrents_table__torrent_name"
+            },
+            "Lime": {
+                "title": "https://www.limetorrents.cc/search/all/",
+                "selector": "table.table2 div.tt-name"
+            },
+            "RARBG": {
+                "title": "http://rarbg.is/torrents.php?search=",
+                "selector": "table.lista2t tr.lista2"
+            },
+            "WorldWide": {
+                "title": "https://worldwidetorrents.me/torrents-search.php?search=",
+                "selector": "div.w3-responsive td.w3-jose"
+            },
+            "Zooqle": {
+                "title": "https://zooqle.com/search?q=",
+                "selector": "div.panel-body a.small"
+            },
+            "海盗湾": {
+                "title": "https://thepiratebay.org/search/",
+                "selector": "#searchResult div.detName"
             }
         }
     }
@@ -149,6 +603,167 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
             segments: a.pathname.replace(/^\//, '').split('/')
         };
     };
+
+
+    var update_site = function (group, site, link_prefix, keyword, enable_search, selector) {
+        // check if this site is enabled by user
+        var enable_site = GM_getValue(site, 'none');
+        if (enable_site == 'none') {
+            enable_site = 1;
+            GM_setValue(site, enable_site);
+        }
+        if (!enable_site) return;
+
+        function Get_Search_Page(site, link_prefix, parser_func) {
+            //console.log("Start Searching in Site " + site + " ."+link_prefix );
+            GM_xmlhttpRequest({
+                method: 'GET',
+                url: link_prefix,
+                onload: function (res) {
+                    //console.log(res.finalUrl);
+                    if (/((login|action|verify|returnto)[.=]|\/login$)/.test(res.finalUrl)) {
+                        //console.log("May Not Login in Site " + site + ". With finalUrl: " + res.finalUrl);
+                    }
+                    else if (/refresh: \d+; url=.+login.+/.test(res.responseHeaders)) {
+
+                    } else {
+                        let responseText = res.responseText;
+                        // if (label.name==="AT") {//console.log(label.name);//console.log(res.finalUrl);//console.log(res.responseHeaders);//console.log(res.responseText);}
+                        if (typeof responseText === "undefined") {
+
+                        } else if (responseText.length < 800 && /login/.test(responseText)) {
+
+                        }
+                        else {
+                            //console.log("Get Search Pages Success in Site " + site + ".");
+                            var doc = (new DOMParser()).parseFromString(res.responseText, 'text/html');
+                            var body = doc.querySelector("body");
+                            var page = $(body); // 构造 jQuery 对象
+                            try {
+                                //console.log('trying', site);
+                                parser_func(res, doc, body, page);
+                                //console.log("End of Search in Site " + site + ".");
+                            } catch (error) {
+                                //console.log("An error occurred when parser in Site " + site + ". With Error information: " + error + ". Please opening a issues to report at https://github.com/Rhilip/PT-help/issues/2");
+                            }
+                        }
+                    }
+                },
+                onerror: function (res) {
+                    //console.log("An error occurred when searching in Site " + site + " .With finalUrl: " + res.finalUrl + ". Your computer may not be able to access this site.");
+                }
+            });
+        }
+
+        if ($('#content div.' + group + '-body ul a.' + site).attr('stat') == 'true') return;
+
+
+        // add this site to the right column
+        var url = parseURL(link_prefix + keyword);
+        //console.log('url', url);
+        var link = $('<a></a>');
+        link.addClass(site);
+        link.attr('href', url.source);
+        link.attr('data-host', url.host);
+        link.attr('target', '_blank').attr('rel', 'nofollow');
+        link.html(site);
+        if ($('#content div.' + group + '-body ul a.' + site).attr('class') == site) {
+            //console.log(site, ' alreay exist')
+            if (!enable_search) return;
+            //console.log('stat=', $('#content div.' + group + '-body ul a.' + site).attr('stat'));
+            if ($('#content div.' + group + '-body ul a.' + site).attr('stat') == 'true') return;
+        }
+        else {
+            $('#content div.' + group + '-body ul').append(link);
+            //console.log('append first time');
+        }
+        if (enable_search) {
+            Get_Search_Page(site, url.source, function (res, doc, body, page) {
+                // //console.log("loading info from", url);
+                var url_prefix = /pt\.whu\.edu\.cn|whupt\.net|hudbt\.hust\.edu\.cn/.test(res.finalUrl) ? "" : (res.finalUrl.match(/(https?:\/\/[^\/]+?\/).+/) || ['', ''])[1];
+                //console.log("Using The normal parser for NexusPHP in Site: " + site);
+                var result;
+                if (/(没有种子|No Torrents Found|Your search did not match anything|No torrents here|Make sure all names are spelled correctly|用准确的关键字重试)/.test(res.responseText)) {
+                    //console.log("No any torrent find in Site " + site + ".");
+                    result = false;
+                } else {
+                    var tr_list = page.find(selector || "table.torrents:last > tbody > tr:gt(0)");
+                    //console.log("Get " + tr_list.length + " records in Site " + site + ".");
+                    if (tr_list.length) {
+                        result = true;
+                        //console.log('search result',tr_list.length);
+                    }
+                    else {
+                        result = false;
+
+                    }
+                }
+
+                //console.log(result, url);
+                if (result) {
+                    if ($('#content div.' + group + '-body ul a.' + site).attr('stat') == 'true') return;
+                    $('#content div.' + group + '-body ul a.' + site).css("background-color", "#e3f1ed");
+                    $('#content div.' + group + '-body ul a.' + site).attr('stat', 'true').attr('href', url.source);
+                    //console.log('result true');
+                }
+                else {
+                    if ($('#content div.' + group + '-body ul a.' + site).attr('stat') == 'true') return;
+                    $('#content div.' + group + '-body ul a.' + site).css("background-color", "#f4eac2");
+                    $('#content div.' + group + '-body ul a.' + site).attr('stat', 'none');
+                    //console.log(site, 'result false');
+                }
+            });
+        }
+    }
+
+    var update_group = function (group, group_title) {
+        if ($('div.' + group + '-body').length) return;
+        var site_pt = $(aside_html);
+        site_pt.addClass(group);
+        site_pt.find('div.c-aside-body').addClass(group + '-body');
+        site_pt.find('h2 i').text(group_title);
+
+        $('#content div.tags').before(site_pt);
+    }
+
+    var update_batch = function () {
+        // config pt batch link
+        site_pt_batch = $(aside_html);
+        site_pt_batch.addClass('name-offline');
+        site_pt_batch.find('div.c-aside-body').addClass('site-pt-batch');
+        site_pt_batch.find('h2 i').text('PT批量打开');
+        $('#content div.tags').before(site_pt_batch);
+        $('#interest_sectl').after($('div.grid-16-8 div.related-info'));
+        $('#interest_sectl').attr('style', 'float:right');
+        $('div.related-info').attr('style', 'width:480px;float:left');
+        var ptlink_all, ptlink_true, ptlink_none;
+        ptlink_all = $('<a>全 部</a>').attr('class', 'ptlink_all');
+        ptlink_all.css("background-color", "#f5f5f5");
+        ptlink_true = $('<a>有资源</a>').attr('class', 'ptlink_true');
+        ptlink_true.css("background-color", "#e3f1ed");
+        ptlink_none = $('<a>无资源</a>').attr('class', 'ptlink_none');
+        ptlink_none.css("background-color", "#f4eac2");
+        ptlink_all.click(function () {
+            $('.ptsite-body a[href]').each(function () {
+                window.open($(this).attr('href'))
+            });
+        });
+        ptlink_true.click(function () {
+            $('.ptsite-body a[stat="true"]').each(function () {
+                window.open($(this).attr('href'))
+            });
+        });
+        ptlink_none.click(function () {
+            $('.ptsite-body a[stat="none"]').each(function () {
+                window.open($(this).attr('href'))
+            });
+        });
+        $('#content div.site-pt-batch ul').prepend(ptlink_none);
+        $('#content div.site-pt-batch ul').prepend(ptlink_true);
+        $('#content div.site-pt-batch ul').prepend(ptlink_all);
+    }
+
+
 
     if (location.href.startsWith('https://movie.douban.com/subject/')) {
         $(document).ready(function () {
@@ -280,150 +895,28 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
             title_cn = title_cn.shift();
 
 
-            var update_site = function (group, site, link_prefix, keyword, enable_search, torrent_table_selector) {
-                // check if this site is enabled by user
-                var enable_site = GM_getValue(site, 'none');
-                if (enable_site == 'none') {
-                    enable_site = 1;
-                    GM_setValue(enable_site);
+
+            for (group in sites_list) {
+                var flag_group = GM_getValue(group, "none");
+                if (flag_group == "none") {
+                    flag_group = 1;
+                    GM_setValue(group, flag_group);
                 }
-                if (!enable_site) return;
-            
-                function Get_Search_Page(site, link_prefix, parser_func) {
-                    //console.log("Start Searching in Site " + site + " ."+link_prefix );
-                    GM_xmlhttpRequest({
-                        method: 'GET',
-                        url: link_prefix,
-                        onload: function (res) {
-                            if (/(login|verify|returnto)[.=]/.test(res.finalUrl)) {
-                                //console.log("May Not Login in Site " + site + ". With finalUrl: " + res.finalUrl);
-                            } else {
-                                //console.log("Get Search Pages Success in Site " + site + ".");
-                                var doc = (new DOMParser()).parseFromString(res.responseText, 'text/html');
-                                var body = doc.querySelector("body");
-                                var page = $(body); // 构造 jQuery 对象
-                                try {
-                                    parser_func(res, doc, body, page);
-                                    //console.log("End of Search in Site " + site + ".");
-                                } catch (error) {
-                                    //console.log("An error occurred when parser in Site " + site + ". With Error information: " + error + ". Please opening a issues to report at https://github.com/Rhilip/PT-help/issues/2");
-                                }
-                            }
-                        },
-                        onerror: function (res) {
-                            //console.log("An error occurred when searching in Site " + site + " .With finalUrl: " + res.finalUrl + ". Your computer may not be able to access this site.");
-                        }
-                    });
+                if (!flag_group) continue;
+                if (group == 'ptsite') update_batch();
+                update_group(group, sites_list[group].name);
+                var flag_group_auto = GM_getValue(group + '_auto', "none");
+                if (flag_group_auto == "none") {
+                    flag_group_auto = 1;
+                    GM_setValue(group + '_auto', flag_group_auto);
                 }
-            
-                if ($('#content div.' + group + '-body ul a.' + site).attr('stat') == 'true') return;
-            
-            
-                // add this site to the right column
-                var url = parseURL(link_prefix + keyword);
-                //console.log('url', url);
-                var link = $('<a></a>');
-                link.addClass(site);
-                link.attr('href', url.source);
-                link.attr('data-host', url.host);
-                link.attr('target', '_blank').attr('rel', 'nofollow');
-                link.html(site);
-                if ($('#content div.' + group + '-body ul a.' + site).attr('class') == site) {
-                    console.log(site, ' alreay exist')
-                    if (!enable_search) return;
-                    console.log('stat=', $('#content div.' + group + '-body ul a.' + site).attr('stat'));
-                    if ($('#content div.' + group + '-body ul a.' + site).attr('stat') == 'true') return;
+                for (site in sites_list[group].sites) {
+                    if (imdb.length && sites_list[group].sites[site].imdb) {
+                        update_site(group, site, sites_list[group].sites[site].imdb, imdb_id, flag_group_auto, sites_list[group].sites[site].selector);
+                    }
+
                 }
-                else {
-                    $('#content div.' + group + '-body ul').append(link);
-                    console.log('append first time');
-                }
-                if (enable_search) {
-                    Get_Search_Page(site, url.source, function (res, doc, body, page) {
-                        // console.log("loading info from", url);
-                        var url_prefix = /pt\.whu\.edu\.cn|whupt\.net|hudbt\.hust\.edu\.cn/.test(res.finalUrl) ? "" : (res.finalUrl.match(/(https?:\/\/[^\/]+?\/).+/) || ['', ''])[1];
-                        //console.log("Using The normal parser for NexusPHP in Site: " + site);
-                        var result;
-                        if (/没有种子|No Torrents Found|Your search did not match anything.|No torrents here|用准确的关键字重试/.test(res.responseText)) {
-                            //console.log("No any torrent find in Site " + site + ".");
-                            result = false;
-                        }
-                        var tr_list = page.find(torrent_table_selector || "table.torrents:last > tbody > tr:gt(0)");
-                        //console.log("Get " + tr_list.length + " records in Site " + site + ".");
-                        if (tr_list.length) {
-                            result = true;
-                            // console.log('search result',tr_list.length);
-                        }
-                        else {
-                            result = false;
-            
-                        }
-                        console.log(result,url);
-                        if (result) {
-                            $('#content div.' + group + '-body ul a.' + site).css("background-color", "#e3f1ed");
-                            $('#content div.' + group + '-body ul a.' + site).attr('stat', 'true').attr('href', url.source);
-                            console.log('result true');
-                        }
-                        else {
-                            if($('#content div.' + group + '-body ul a.' + site).attr('stat') == 'true') return;
-                            $('#content div.' + group + '-body ul a.' + site).css("background-color", "#f4eac2");
-                            $('#content div.' + group + '-body ul a.' + site).attr('stat', 'none');
-                            console.log('result false');
-                        }
-                    });
-                }
-            
-            
-            
-            
-            
             }
-            
-            var update_group = function (group, group_title) {
-                var site_pt = $(aside_html);
-                site_pt.addClass(group);
-                site_pt.find('div.c-aside-body').addClass(group + '-body');
-                site_pt.find('h2 i').text(group_title);
-                $('#content div.tags').before(site_pt);
-            }
-            
-            var update_batch = function () {
-                // config pt batch link
-                site_pt_batch = $(aside_html);
-                site_pt_batch.addClass('name-offline');
-                site_pt_batch.find('div.c-aside-body').addClass('site-pt-batch');
-                site_pt_batch.find('h2 i').text('PT批量打开');
-                $('#content div.tags').before(site_pt_batch);
-                $('#interest_sectl').after($('div.grid-16-8 div.related-info'));
-                $('#interest_sectl').attr('style', 'float:right');
-                $('div.related-info').attr('style', 'width:480px;float:left');
-                var ptlink_all, ptlink_true, ptlink_none;
-                ptlink_all = $('<a>全 部</a>').attr('class', 'ptlink_all');
-                ptlink_all.css("background-color", "#f5f5f5");
-                ptlink_true = $('<a>有资源</a>').attr('class', 'ptlink_true');
-                ptlink_true.css("background-color", "#e3f1ed");
-                ptlink_none = $('<a>无资源</a>').attr('class', 'ptlink_none');
-                ptlink_none.css("background-color", "#f4eac2");
-                ptlink_all.click(function () {
-                    $('.site-pt-body a[href]').each(function () {
-                        window.open($(this).attr('href'))
-                    });
-                });
-                ptlink_true.click(function () {
-                    $('.site-pt-body a[stat="true"]').each(function () {
-                        window.open($(this).attr('href'))
-                    });
-                });
-                ptlink_none.click(function () {
-                    $('.site-pt-body a[stat="none"]').each(function () {
-                        window.open($(this).attr('href'))
-                    });
-                });
-                $('#content div.site-pt-batch ul').prepend(ptlink_none);
-                $('#content div.site-pt-batch ul').prepend(ptlink_true);
-                $('#content div.site-pt-batch ul').prepend(ptlink_all);
-            }
-            
 
 
 
@@ -436,25 +929,27 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                     title_en = title_en.split(' (')[0];
 
 
+
                     for (group in sites_list) {
-                        var flag_group=GM_getValue(group,"none");
-                        if(flag_group=="none"){
-                            flag_group=1;
-                            GM_setValue(flag_group);
+                        var flag_group = GM_getValue(group, "none");
+                        if (flag_group == "none") {
+                            flag_group = 1;
+                            GM_setValue(group, flag_group);
                         }
-                        if(!flag_group) continue;
+                        if (!flag_group) continue;
                         update_group(group, sites_list[group].name);
-                        if(group=='ptsites') update_batch();
+                        var flag_group_auto = GM_getValue(group + '_auto', "none");
+                        if (flag_group_auto == "none") {
+                            flag_group_auto = 1;
+                            GM_setValue(group + '_auto', flag_group_auto);
+                        }
                         for (site in sites_list[group].sites) {
-                            if (imdb.length && sites_list[group].sites[site].imdb) {
-                                console.log(update_site(group, site, sites_list[group].sites[site].imdb, imdb_id, 1, sites_list[group].sites[site].torrent_table_selector));
+                            if (sites_list[group].sites[site].title) {
+                                update_site(group, site, sites_list[group].sites[site].title, title_en, flag_group_auto, sites_list[group].sites[site].selector);
+                                update_site(group, site, sites_list[group].sites[site].title, title_cn, flag_group_auto, sites_list[group].sites[site].selector);
                             }
-                            console.log(update_site(group, site, sites_list[group].sites[site].title, title_cn, 1, sites_list[group].sites[site].torrent_table_selector));
-                            console.log(update_site(group, site, sites_list[group].sites[site].title, title_en, 1, sites_list[group].sites[site].torrent_table_selector));
                         }
                     }
-                    
-
 
 
 
@@ -466,36 +961,7 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                     rating_imdb = $('#interest_sectl .rating_imdb');
                     $('#interest_sectl .rating_imdb a.rating_people').attr('href', imdb_href + '/' + 'ratings?ref_=tt_ov_rt');
                     ratingValue = $('span[itemprop=ratingValue]', doc).text();
-                    $('#interest_sectl .rating_imdb strong.rating_num').text(ratingValue);
-                    starValue = ratingValue / 2;
-                    starValue = starValue % 1 > 0.5 ? Math.floor(starValue) + 0.5 : Math.floor(starValue);
-                    starValue *= 10;
-                    starValue = 'bigstar' + starValue;
-                    $('#interest_sectl .rating_imdb div.rating_right div.ll').addClass(starValue);
-                    ratingCount = $('span[itemprop=ratingCount]', doc).text();
-                    $('#interest_sectl .rating_imdb a.rating_people span[property^=v]').text(ratingCount);
-                    rating_imdb.after($('<div></div>').addClass('rating_more'));
-                    rating_more = $('#interest_sectl .rating_more');
-                    titleReviewBarItem = $('.titleReviewBar div.titleReviewBarItem', doc);
-                    metascore = null;
-                    popularity = null;
-                    reviews = null;
-                    parse = function (item) {
-                        var Popularity, score, text;
-                        text = $(item).text();
-                        if (text.indexOf('Metascore') !== -1) {
-                            score = $(item).find('a[href^=criticreviews] span').text();
-                            metascore = $("<div>");
-                            metascore.html('Metascore');
-                            return metascore.append($('<a></a>').attr('href', imdb_href + '/' + 'criticreviews?ref_=tt_ov_rt').text(score));
-                        } else if (text.indexOf('Popularity') !== -1) {
-                            popularity = $("<div>");
-                            Popularity = $(item).find('span.subText').html();
-                            return popularity.html('流行度&nbsp;&nbsp;' + Popularity + '<br>');
-                        } else if (text.indexOf('Reviews') !== -1) {
-                            return null;
-                        }
-                    };
+
                     // add IMDB top 250 tag
                     if (ratingValue >= 8) {
                         getDoc('https://m.imdb.com/chart/top', meta, function (doc, res, meta) {
@@ -519,9 +985,7 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                         });
                     }
 
-                    // update_site_online_sites(title_en, true);
-                    // update_site_sub_sites(title_en, true);
-                    // update_site_offline_sites(title_en, true, imdb_id);
+
 
                     var flag_infogen = GM_getValue('infogen');
                     if (flag_infogen) {
@@ -532,7 +996,38 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                     // put on more ratings
                     var flag_morerating = GM_getValue('morerating');
                     if (flag_morerating) {
+
                         $('#interest_sectl').append($(imdb_html));
+                        $('#interest_sectl .rating_imdb strong.rating_num').text(ratingValue);
+                        starValue = ratingValue / 2;
+                        starValue = starValue % 1 > 0.5 ? Math.floor(starValue) + 0.5 : Math.floor(starValue);
+                        starValue *= 10;
+                        starValue = 'bigstar' + starValue;
+                        $('#interest_sectl .rating_imdb div.rating_right div.ll').addClass(starValue);
+                        ratingCount = $('span[itemprop=ratingCount]', doc).text();
+                        $('#interest_sectl .rating_imdb a.rating_people span[property^=v]').text(ratingCount);
+                        rating_imdb.after($('<div></div>').addClass('rating_more'));
+                        rating_more = $('#interest_sectl .rating_more');
+                        titleReviewBarItem = $('.titleReviewBar div.titleReviewBarItem', doc);
+                        metascore = null;
+                        popularity = null;
+                        reviews = null;
+                        parse = function (item) {
+                            var Popularity, score, text;
+                            text = $(item).text();
+                            if (text.indexOf('Metascore') !== -1) {
+                                score = $(item).find('a[href^=criticreviews] span').text();
+                                metascore = $("<div>");
+                                metascore.html('Metascore');
+                                return metascore.append($('<a></a>').attr('href', imdb_href + '/' + 'criticreviews?ref_=tt_ov_rt').text(score));
+                            } else if (text.indexOf('Popularity') !== -1) {
+                                popularity = $("<div>");
+                                Popularity = $(item).find('span.subText').html();
+                                return popularity.html('流行度&nbsp;&nbsp;' + Popularity + '<br>');
+                            } else if (text.indexOf('Reviews') !== -1) {
+                                return null;
+                            }
+                        };
                         for (i = 0, len = titleReviewBarItem.length; i < len; i++) {
                             item = titleReviewBarItem[i];
                             parse(item);
@@ -556,6 +1051,28 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                 });
 
             }
+            else {
+                for (group in sites_list) {
+                    var flag_group = GM_getValue(group, "none");
+                    if (flag_group == "none") {
+                        flag_group = 1;
+                        GM_setValue(group, flag_group);
+                    }
+                    if (!flag_group) continue;
+                    update_group(group, sites_list[group].name);
+                    var flag_group_auto = GM_getValue(group + '_auto', "none");
+                    if (flag_group_auto == "none") {
+                        flag_group_auto = 1;
+                        GM_setValue(group + '_auto', flag_group_auto);
+                    }
+                    for (site in sites_list[group].sites) {
+                        if (sites_list[group].sites[site].title) {
+                            update_site(group, site, sites_list[group].sites[site].title, title_cn, flag_group_auto, sites_list[group].sites[site].selector);
+                        }
+                    }
+                }
+
+            }
 
 
 
@@ -566,135 +1083,23 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
             // add link to BIG poster
             var flag_poster = GM_getValue('poster');
             if (flag_poster) {
-                let posterAnchor = document.querySelector('#mainpic > a');
-                if (posterAnchor) {
+                var posterAnchor = $('#mainpic img');
+                if (posterAnchor.attr('src')) {
                     // get the posters page's URL via movie.douban.com's customs
                     let url = window.location.href;
-                    let urlTrimmed = url.slice(0, 42);
-                    let postersUrl = urlTrimmed + "photos?type=R";
+                    var douban_id = url.split('/')[4];
+                    var postersUrl = 'https://movie.douban.com/subject/' + douban_id + '/photos?type=R';
 
-                    // ajax call on the posters page's URL
-                    let xhttp = new XMLHttpRequest();
-                    xhttp.onreadystatechange = function () {
-                        if (this.readyState == 4 && this.status == 200) {
-                            let tempDiv = document.createElement('div');
-                            tempDiv.innerHTML = this.responseText;
-                            let aPosterUrl = tempDiv.querySelector('.article > ul > li:nth-child(1) > div.cover > a').getAttribute('href');
+                    getDoc(postersUrl, null, function (doc, res, meta) {
+                        var aPosterUrl = $('.article > ul > li:nth-child(1) > div.cover > a', doc).attr('href');
+                        getDoc(aPosterUrl, null, function (doc2, res, meta) {
+                            var hdPosterAnchor = $('span.magnifier > a', doc2);
+                            $('#mainpic p.gact').after(hdPosterAnchor);
+                        })
+                    })
 
-                            // ajax call on the 1st poster's page
-                            let xhttp = new XMLHttpRequest();
-                            xhttp.onreadystatechange = function () {
-                                if (this.readyState == 4 && this.status == 200) {
-                                    let tempDiv = document.createElement('div');
-                                    tempDiv.innerHTML = this.responseText;
-                                    let hdPosterAnchor = tempDiv.querySelector('span.magnifier > a');
-                                    let info = document.querySelector('#info');
-                                    // info.appendChild(hdPosterAnchor);
-                                    $('#mainpic p.gact').after(hdPosterAnchor);
-                                }
-                            };
-                            xhttp.open("GET", aPosterUrl, true);
-                            xhttp.send();
-                            // another ajax ends
-                        }
-                    };
-                    xhttp.open("GET", postersUrl, true);
-                    xhttp.send();
                 }
             }
-
-
-            //         //get torrents info from NexusPHP sites
-            //         var flag_ptsite = GM_getValue('ptsite');
-            //         if (flag_ptsite) {
-            //             function NexusPHP(site, search_prefix, torrent_table_selector) {
-            //                 function Get_Search_Page(site, search_prefix, parser_func) {
-            //                     //console.log("Start Searching in Site " + site + " ."+search_prefix );
-            //                     GM_xmlhttpRequest({
-            //                         method: 'GET',
-            //                         url: search_prefix,
-            //                         onload: function (res) {
-            //                             if (/(login|verify|returnto)[.=]/.test(res.finalUrl)) {
-            //                                 //console.log("May Not Login in Site " + site + ". With finalUrl: " + res.finalUrl);
-            //                             } else {
-            //                                 //console.log("Get Search Pages Success in Site " + site + ".");
-            //                                 var doc = (new DOMParser()).parseFromString(res.responseText, 'text/html');
-            //                                 var body = doc.querySelector("body");
-            //                                 var page = $(body); // 构造 jQuery 对象
-            //                                 try {
-            //                                     parser_func(res, doc, body, page);
-            //                                     //console.log("End of Search in Site " + site + ".");
-            //                                 } catch (error) {
-            //                                     //console.log("An error occurred when parser in Site " + site + ". With Error information: " + error + ". Please opening a issues to report at https://github.com/Rhilip/PT-help/issues/2");
-            //                                 }
-            //                             }
-            //                         },
-            //                         onerror: function (res) {
-            //                             //console.log("An error occurred when searching in Site " + site + " .With finalUrl: " + res.finalUrl + ". Your computer may not be able to access this site.");
-            //                         }
-            //                     });
-
-            //                 }
-            //                 Get_Search_Page(site, search_prefix, function (res, doc, body, page) {
-            //                     var url_prefix = /pt\.whu\.edu\.cn|whupt\.net|hudbt\.hust\.edu\.cn/.test(res.finalUrl) ? "" : (res.finalUrl.match(/(https?:\/\/[^\/]+?\/).+/) || ['', ''])[1];
-            //                     //console.log("Using The normal parser for NexusPHP in Site: " + site);
-            //                     var psite = $('.site-pt-body a').filter(function () {
-            //                         return $(this).attr('site') == site;
-            //                     });
-            //                     if (/没有种子|No Torrents Found|Your search did not match anything.|No torrents here|用准确的关键字重试/.test(res.responseText)) {
-            //                         //console.log("No any torrent find in Site " + site + ".");
-            //                         $(psite).css("background-color", "#f4eac2");
-            //                         $(psite).attr('stat', 'none');
-            //                         return;
-            //                     }
-            //                     var tr_list = page.find(torrent_table_selector || "table.torrents:last > tbody > tr:gt(0)");
-            //                     //console.log("Get " + tr_list.length + " records in Site " + site + ".");
-            //                     if (tr_list.length) {
-            //                         $(psite).css("background-color", "#e3f1ed");
-            //                         $(psite).attr('stat', 'true');
-            //                     }
-            //                     else {
-            //                         $(psite).css("background-color", "#f4eac2");
-            //                         $(psite).attr('stat', 'none');
-            //                     }
-            //                 });
-            //             }
-            //             // edu ipv6 sites
-            //             NexusPHP("BYR", "https://bt.byr.cn/torrents.php?incldead=0&search_area=4&search=" + imdb_id);
-            //             NexusPHP("WHUPT", "https://pt.whu.edu.cn/torrents.php?incldead=1&search=" + imdb_id, "table.torrents:last > tbody > tr");
-            //             NexusPHP("HUDBT", "https://hudbt.hust.edu.cn/torrents.php?incldead=1&search_area=4&search=" + imdb_id, "table.torrents:last > tbody > tr");
-            //             NexusPHP("NPUPT", "https://npupt.com/torrents.php?incldead=1&sort=10&imdb=tt" + imdb_id, "table#torrents_table:last > tbody > tr:gt(0)");
-
-            //             // chinese sites
-            //             NexusPHP("CHDBits", "https://chdbits.co/torrents.php?cat401=1&incldead=1&search_area=4&search=" + imdb_id);
-            //             NexusPHP("CMCT", "https://hdcmct.org/torrents.php?incldead=1&search_area=4&search=" + imdb_id);
-            //             NexusPHP("GZTown", "https://pt.gztown.net/torrents.php?incldead=1&search_area=4&search=" + imdb_id);
-            //             NexusPHP("HD4FANS", "https://pt.hd4fans.org/torrents.php?incldead=1&search_area=4&search=" + imdb_id);
-            //             NexusPHP("HDChina", "https://hdchina.org/torrents.php?incldead=1&search_area=4&search_mode=0&search=" + imdb_id, "table.torrent_list:last > tbody > tr:gt(0)");
-            //             NexusPHP("HDHome", "https://hdhome.org/torrents.php?incldead=1&search_area=4&search=" + imdb_id);
-            //             NexusPHP("HDSky", "https://hdsky.me/torrents.php?incldead=1&search_area=4&search=" + imdb_id);
-            //             NexusPHP("HDTime", "https://hdtime.org/torrents.php?search=" + imdb_id);
-            //             NexusPHP("KeepFrds", "https://pt.keepfrds.com/torrents.php?search=" + imdb_id);
-            //             NexusPHP("MTeam", "https://tp.m-team.cc/movie.php?incldead=1&search_area=4&search=" + imdb_id);
-            //             NexusPHP("Ourbits", "https://ourbits.club/torrents.php?incldead=1&search_area=4&search=" + imdb_id);
-            //             NexusPHP("TLFBits", "http://pt.eastgame.org/torrents.php?incldead=1&search_area=4&search=" + imdb_id);
-            //             NexusPHP("TTG", "https://totheglory.im/browse.php?search_field=" + title, "table#torrent_table:last > tbody > tr:gt(0)");
-            //             NexusPHP("U2", "https://u2.dmhy.org/torrents.php?incldead=1&search_area=4&search=" + imdb_id);
-
-            //             //global sites
-            //             NexusPHP("ADC", "http://asiandvdclub.org/browse.php?descr=1&btnSubmit=Search%21&search=tt" + imdb_id, "table.torrenttable:last > tbody > tr");
-            //             NexusPHP("AHD", "https://awesome-hd.me/torrents.php?searchstr=tt" + imdb_id, "table.torrent_table:last > tbody > tr:gt(0)");
-            //             NexusPHP("HDBits", "https://hdbits.org/browse.php?&imdb=" + imdb_id);
-            //             NexusPHP("HDT", "https://hd-torrents.org/torrents.php?active=0&options=2&search=" + imdb_id, "table.mainblockcontenttt:last > tbody > tr:gt(0)");
-            //             NexusPHP("HDSpace", "https://hd-space.org/index.php?page=torrents&active=0&options=2&search=" + imdb_id, "table.lista:last > tbody > tr:gt(0)");
-            //             NexusPHP("IPT", "https://iptorrents.com/t?q=tt" + imdb_id, "table#torrents:last > tbody > tr:gt(0)");
-            //             NexusPHP("KG", "https://karagarga.in/browse.php?search_type=imdb&search=" + imdb_id, "table#browse:last > tbody > tr:gt(0)");
-            //             NexusPHP("PTP", "https://passthepopcorn.me/torrents.php?searchstr=tt" + imdb_id, "table.torrent_table:last > tbody > tr:gt(0)");
-            //             NexusPHP("Tik", "https://www.cinematik.net/browse.php?incldead=1&sort=1&type=asc&srchdtls=1&search=tt " + imdb_id, "table[cellpadding]:last > tbody > tr:gt(0)");
-            //             NexusPHP("TorViet", "http://torviet.com/torrents.php?incldead=&search_area=4&search=" + imdb_id);
-            //             NexusPHP("UHD", "https://uhdbits.org/torrents.php?searchstr=tt" + imdb_id, "table.torrent_table:last > tbody > tr:gt(0)");
-            //             NexusPHP("SC", "https://secret-cinema.pw/torrents.php?cataloguenumber=tt" + imdb_id, "div.torrent_card");
-            //         }
         });
     }
     // movie blacklist on '/explore' and '/tag'
@@ -712,8 +1117,8 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                     var douban_id = $(this).attr('href').split('/')[4];
                     var title = $(this).find('img').attr('alt');
                     var posterid = $(this).find('img').attr('src').split('/')[7].replace('.jpg', '');
-                    //  console.log('title=' + title);
-                    //  console.log('posterid=' + posterid);
+                    //  //console.log('title=' + title);
+                    //  //console.log('posterid=' + posterid);
                     $(this).before('<div class="bl_cover" style="display:block;position:absolute;z-index:99;"><a><div style="background:#52a4d7d6;height:20px;width:30px;text-align:center;color:white">屏蔽</div><a></div>');
                     $(this).prev().attr('title', '屏蔽' + douban_id).css({ "left": ($(this).offset().left + 85), "top": ($(this).offset().top) });
                     $(this).prev().click(function () {
@@ -765,8 +1170,8 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                             var title = $('div.detail-pop .info h3 a').text();
                             var posterid = $('a.item').filter(function () { return RegExp('"' + douban_id + '"').test($(this).html()) }).find('img').first().attr('src').split('/')[7].replace('.jpg', '');
                             GM_setValue(douban_id, title + '$' + posterid);
-                            // console.log('title=' + title);
-                            // console.log('posterid=' + posterid);
+                            // //console.log('title=' + title);
+                            // //console.log('posterid=' + posterid);
                             blacklist();
                         });
                     $('div.detail-pop .collect-area').append(add_blocklist_button);
@@ -780,6 +1185,12 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
         var flag_blacklist = GM_getValue('blacklist');
         if (flag_blacklist) {
             var bl_nav = $('<a style="color:#27a">黑名单</a>');
+            bl_nav.mouseover(function () {
+                $(this).css('color', 'white');
+            })
+            bl_nav.mouseout(function () {
+                $(this).css('color', '#27a');
+            })
             var update_bl = function (i) {
                 var bl_list = GM_getValue('bl', '').split('$');
                 if (!bl_list.length || i >= bl_list.length) {
@@ -811,7 +1222,7 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                             var posterid = temp.image.split('/')[7].replace('.webp', '');
                             GM_setValue(current_id, title + '$' + posterid);
                             append_movie(title, posterid);
-                            // console.log('get info from api.douban.com title=' + title + ' and posterid=' + posterid);
+                            // //console.log('get info from api.douban.com title=' + title + ' and posterid=' + posterid);
                             $('.article .indent div').first().empty().append('<p class="ul first"></p>');
                             update_bl(1);
                         });
@@ -882,12 +1293,154 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                 })
                 update_bl(1);
             })
-            // bl_nav=bl_nav.wrap('<li></li>')
-            $('div.nav-items ul').append(bl_nav);
+            $('div.nav-items ul').append('<li></li>');
+            $('div.nav-items ul li').last().append(bl_nav);
         }
+
+
+        var flag_artist = GM_getValue('artist');
+        if (flag_artist) {
+            var artist_nav = $('<a style="color:#27a">影人资源</a>');
+            artist_nav.mouseover(function () {
+                $(this).css('color', 'white');
+            })
+            artist_nav.mouseout(function () {
+                $(this).css('color', '#27a');
+            })
+
+            artist_nav.click(function () {
+                $('div#wrapper').empty();
+                $('div#wrapper').append('<div id="content"><h1>导演资源搜索</h1><div class="grid-16-8 clearfix"><div class="article"><div class="indent"><div class="movie-list"></div></div></div><div class="aside"><div><h2>导演检索 · · · · · ·</h2><div><span><p><form id="form-artist"><input class="artist" id="input-artist" placeholder="诺兰, nm0634240, ..." value="" /input><input type="button" id="artist-submit" value="search" /input></form></p></span><span style="" class="search_result c-aside-body"></span></div></div><div class="artist_intro"><h2>导演资源说明 · · · · · ·</h2><p>影人资源可以列出某导演的全部执导作品并加以搜索。</p><p>此功能可以弥补一些站点没有“Artist”“Collection”的缺憾。</p></div><div><h2>使用帮助 · · · · · ·</h2><p>输入导演名称，点击搜索。在搜索结果中点击你想搜的导演即可。</p><p>由于【某些原因】，导演作品列表采取IMDB数据库中的信息。若和豆瓣影人信息有出入，请谅解。</p><p>目前仅支持导演作品，如需按演员搜索功能，请email：exhen32@live.com请求开发。</p></div></div></div></div>');
+                $('#artist-submit').click(function () {
+                    var artist = document.getElementById("input-artist").value;
+                    //console.log(artist);
+                    $('span.search_result').empty();
+                    $('.c-aside').remove();
+                    getDoc('https://cn.bing.com/search?q=site%3Awww.imdb.com%2Fname%2F+' + artist, null, function (doc, res, meta) {
+                        var id_list = [];
+                        $('#b_results .b_algo a', doc).each(function () {
+                            var id = $(this).attr('href').split('/')[4];
+                            if (!id) return;
+                            if (!id.startsWith('nm')) return;
+                            if ($.inArray(id, id_list) >= 0) return;
+                            id_list.push(id);
+                        })
+                        if (id_list.length == 0) {
+                            $('span.search_result').append('没有找到相关导演');
+                        }
+                        $.each(id_list, function (i, id) {
+                            //console.log(id);
+                            getDoc('https://cn.bing.com/search?q=site%3Amovie.douban.com%2Fcelebrity%2F+' + id, null, function (doc2, res, meta) {
+                                var name = $('#b_results .b_algo a', doc2).first().text().replace(/(\(豆瓣\)|\s-\s豆瓣电影)/, '');
+                                var link = $('<a style="background-color: rgb(245, 245, 245);"></a>');
+                                link.attr('id', id);
+                                link.attr('name', name);
+                                link.html(name);
+                                link.click(function () {
+                                    $('span.search_result').empty();
+                                    $('div.movie-list').empty().append('<p class="ul first"></p>');
+                                    var id = $(this).attr('id');
+                                    var name = $(this).attr('name');
+                                    $('div.movie-list').prepend('<h2>' + name + '导演作品 · · · · · · </h2>');
+                                    getDoc('https://www.imdb.com/name/' + id + '/?ref_=nv_sr_1#director', null, function (doc, res, meta) {
+                                        $('.filmo-category-section div.filmo-row', doc).each(function () {
+                                            if ($(this).attr('id').startsWith('director-')) {
+                                                var tt = $(this).attr('id');
+                                                tt = tt.slice(9);
+                                                //console.log(tt);
+                                                var title_en = $(this).find('b a').text();
+                                                getDoc('https://cn.bing.com/search?q=site%3Amovie.douban.com%2Fsubject%2F+%2BIMDb链接%3A+%2B' + tt, null, function (doc3, res, meta) {
+                                                    var title_cn = $('#b_results .b_algo a', doc3).first().text().replace(/(\(豆瓣\)|\s-\s豆瓣电影)/, '');
+                                                    var douban_link = $('#b_results .b_algo a', doc3).first().attr('href');
+                                                    if (douban_link) {
+                                                        var douban_id = douban_link.split('/')[4];
+                                                    }
+
+                                                    title_cn = title_cn == '' ? '暂无条目' : title_cn;
+                                                    $('div.movie-list').append('<div class="' + tt + '"><h2 style="font-size:13px;">' + title_cn + '<span style="    color: grey;font-size: 10px;margin-left: 10px;margin-right: 5px;">' + title_en + '</span>' + '<span style="    color: grey;font-size: 10px;margin-left: 5px;margin-right: 5px;"><a href="https://www.imdb.com/title/' + tt + '">imdb:' + tt + '</a></span><span style="    color: grey;font-size: 10px;margin-left: 5px;margin-right: 5px;"><a href="' + douban_link + '">dbid:' + douban_id + '</a></span></h2><div></div></div><div class="tags"><p class="ul"></p></div>');
+                                                    $('td div.director').append('</br>');
+                                                })
+                                            }
+                                        });
+
+                                        var site_pt = $(aside_html);
+                                        site_pt.addClass('ptsite');
+                                        site_pt.find('div.c-aside-body').addClass('ptsite' + '-body');
+                                        site_pt.find('h2 i').text('选择站点');
+                                        $('.artist_intro').before(site_pt);
+                                        for (site in sites_list['ptsite'].sites) {
+                                            var enable_site = GM_getValue(site, 'none');
+                                            if (enable_site == 'none') {
+                                                enable_site = 1;
+                                                GM_setValue(site, enable_site);
+                                            }
+                                            if (!enable_site) return;
+                                            // add this site to the right column
+
+                                            //console.log('url', url);
+                                            var link = $('<a style="background-color: rgb(245, 245, 245);"></a>');
+                                            link.addClass(site);
+                                            link.html(site);
+                                            link.click(function () {
+                                                $('.ptsite-body a').css('background-color', '#f5f5f5');
+
+                                                $('div.movie-list div div').empty();
+                                                var site = $(this).attr('class');
+                                                $(this).css("background-color", '#e3f1ed');
+                                                GM_setValue('site_artist_flag', site);
+
+                                                $('div.movie-list div').each(function () {
+                                                    var tt = $(this).attr('class');
+                                                    if (!tt) return;
+                                                    if (tt.startsWith('tt')) {
+                                                        var url = parseURL(sites_list['ptsite'].sites[site].imdb + tt.slice(2));
+
+                                                        getDoc(url.source, tt, function (doc, res, meta) {
+
+
+                                                            var result;
+                                                            if (/没有种子|No Torrents Found|Your search did not match anything.|No torrents here|用准确的关键字重试/.test(res.responseText)) {
+                                                                //console.log("No any torrent find in Site " + site + ".");
+                                                                result = false;
+                                                            }
+                                                            var tr_list = $(sites_list['ptsite'].sites[site].selector ? sites_list['ptsite'].sites[site].selector : "table.torrents:last > tbody > tr:gt(0)", doc);
+                                                            if (tr_list.length) {
+                                                                result = true;
+                                                                // //console.log('search result',tr_list.length);
+                                                            }
+                                                            else {
+                                                                result = false;
+
+                                                            }
+                                                            if (result) {
+                                                                $('.' + tt + ' div').append('<a href="' + url.source + '">' + url.source + '</a>');
+                                                            }
+                                                            else {
+                                                                $('.' + tt + ' div').append('暂无资源');
+                                                            }
+                                                        })
+                                                    }
+                                                })
+                                            })
+                                            $('.ptsite-body ul').append(link);
+                                        }
+                                    });
+                                })
+                                $('span.search_result').append(link);
+                            })
+                        });
+                    });
+                })
+            })
+            $('div.nav-items ul').append('<li></li>');
+            $('div.nav-items ul li').last().append(artist_nav);
+
+        }
+
+
         // add Script Control Panel
         var cp_nav = $('<a class="lnk-remind">功能开关</a>')
-        var cp_box = $('<div class="more-items" style="width: 180px;"><table cellpadding="0" cellspacing="0"><tbody><tr><td><a>电影黑名单</a></td><td><div class="blacklist"></div></td></tr><tr><td><a>原图链接</a></td><td><div class="poster"></div></td></tr><tr><td><a>生成信息</a></td><td><div class="infogen"></div></td></tr><tr><td><a>PT资源</a></td><td><div class="ptsite"></div></td></tr><tr><td><a>离线资源</a></td><td><div class="offlinesite"></div></td></tr><tr><td><a>字幕资源</a></td><td><div class="subsite"></div></td></tr><tr><td><a>更多评分</a></td><td><div class="morerating"></div></td></tr></tbody></table></div>');
+        var cp_box = $('<div class="more-items" style="width: 180px;"><table cellpadding="0" cellspacing="0"><tbody><tr><td><a>影人资源</a></td><td><div class="artist"></div></td></tr><tr><td><a>电影黑名单</a></td><td><div class="blacklist"></div></td></tr><tr><td><a>原图链接</a></td><td><div class="poster"></div></td></tr><tr><td><a>生成信息</a></td><td><div class="infogen"></div></td></tr><tr><td><a>PT资源</a></td><td><div class="ptsite"></div></td></tr><tr><td><a>PT自动搜索</a></td><td><div class="ptsite_auto"></div></td></tr><tr><td><a>公网资源</a></td><td><div class="offlinesite"></div></td></tr><tr><td><a>公网自动搜索</a></td><td><div class="offlinesite_auto"></div></td></tr><tr><td><a>字幕资源</a></td><td><div class="subsite"></div></td></tr><tr><td><a>字幕自动搜索</a></td><td><div class="subsite_auto"></div></td></tr><tr><td><a>更多评分</a></td><td><div class="morerating"></div></td></tr><tr><td><a class="pt_site_switch">资源站点开关</a></td></tr></tbody></table></div>');
 
         cp_nav.click(function () {
             if ($('div.top-nav-info .cp_nav').hasClass('more-active')) {
@@ -898,7 +1451,9 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
             }
             // $('div.top-nav-info .cp_box').css('display','block');
         })
-        cp_box.find('a').css('color', "#3d3d3d");
+        cp_box.find('a').css('color', "#3d3d3d").click(function () {
+            $(this).parent().next().find('img').click();
+        });
         cp_box.find('td').css('display', "table-cell");
         cp_box.find('td').css('width', "auto");
         cp_box.find('div').each(function () {
@@ -908,35 +1463,57 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
             temp.click(function () {
                 var flag = GM_getValue(switch_class);
                 GM_setValue(switch_class, !flag);
-                console.log(!flag);
                 $(this).attr('src', flag ? 'https://raw.githubusercontent.com/Exhen/douban-movie-helper/master/off.png' : 'https://raw.githubusercontent.com/Exhen/douban-movie-helper/master/on.png');
             })
             var flag = GM_getValue(switch_class, 'none');
-            console.log(switch_class, flag);
+            //console.log(switch_class, flag);
             if (flag == 'none') {
                 GM_setValue(switch_class, 1); flag = 1;
             }
-            console.log("update_switch");
+            //console.log("update_switch");
 
             temp.attr('src', flag ? 'https://raw.githubusercontent.com/Exhen/douban-movie-helper/master/on.png' : 'https://raw.githubusercontent.com/Exhen/douban-movie-helper/master/off.png');
             $(this).append(temp);
+
         });
+        cp_box.find('a.pt_site_switch').click(function () {
+            cp_nav.click();
+            $('div#wrapper').empty();
+            $('div#wrapper').append('<div id="content"><h1>资源站点开关</h1><div class="grid-16-8 clearfix"><div class="article"></div><div class="aside"><div><h2>图例 · · · · · ·</h2><div class="types"><div class="c-aside ptsites"><div class="c-aside-body ptsites-body" style="padding: 0 12px;"><ul><a style="background-color: #e3f1ed;">ON</a><a style="background-color: #f5f5f5;">OFF</a></ul></div></div></div></div></div></div></div>');
+
+            for (group in sites_list) {
+                $('div.article').append('<h2> ' + sites_list[group].name + '· · · · · · </h2><div class="indent"><div class="' + group + '"><ul class="c-aside-body"></ul><p class="ul first"></p></div></div>');
+                for (site in sites_list[group].sites) {
+                    var site_switch = $('<a></a>');
+                    site_switch.html(site);
+                    var site_switch_flag = GM_getValue(site, 'none');
+                    if (site_switch_flag == 'none') {
+                        site_switch_flag = 1;
+                        GM_setValue(site, site_switch_flag);
+                    }
+                    site_switch.addClass(site);
+                    site_switch.css('background-color', site_switch_flag ? '#e3f1ed' : '#f5f5f5');
+                    site_switch.click(function () {
+                        var site_class = $(this).attr('class');
+                        var site_switch_flag = GM_getValue(site_class, 'none');
+                        site_switch_flag = !site_switch_flag;
+                        GM_setValue(site_class, site_switch_flag);
+                        $(this).css('background-color', site_switch_flag ? '#e3f1ed' : '#f5f5f5');
+
+                    })
+                    $('div.article div.' + group + ' ul').append(site_switch);
+                }
+            }
+            $()
+        });
+
 
         $('div.top-nav-info ul').append($('<li class="cp_nav nav-user-account"></li>'));
         $('div.top-nav-info ul .cp_nav').append(cp_nav).append(cp_box);
     })
 }
 else {
-    console.log("page not found");
+    //console.log("page not found");
 }
 
 
-
-console.log(GM_listValues());
-// GM_deleteValue('bl');
-// GM_deleteValue('poster');
-// GM_deleteValue('infogen');
-// GM_deleteValue('ptsite');
-// GM_deleteValue('subsite');
-// GM_deleteValue('offlinesite');
-// GM_deleteValue('morerating');
