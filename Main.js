@@ -1,7 +1,7 @@
 // ==UserScript==
 // @id             exhen32@live.com
 // @name           豆瓣电影助手|douban movie helper
-// @description    【重新定义豆瓣脚本，东半球最好的豆瓣电影增强脚本】10秒搞定豆瓣电影资源下载|豆瓣电影助手|电影黑名单：屏蔽你不想看的烂片|PT资源搜索链接|更多评分|字幕搜索|支持影人作品集批量搜索|增加查看原图链接|增加IMDB top 250标签|一键生成简介|在changhw版本基础上修改，增加pt站搜索，去除垃圾视频站。|感谢R酱、白鸽男孩| 自用脚本，代码粗糙，欢迎捉虫。
+// @description    【重新定义豆瓣脚本，东半球最好的豆瓣电影增强脚本】10秒搞定豆瓣电影资源下载|新增豆列搜索功能|电影黑名单：屏蔽你不想看的烂片|PT资源搜索链接|更多评分|字幕搜索|支持影人作品集批量搜索|增加查看原图链接|增加IMDB top 250标签|一键生成简介|在changhw版本基础上修改，增加pt站搜索，去除垃圾视频站。|感谢R酱、白鸽男孩| 自用脚本，代码粗糙，欢迎捉虫。
 // @author         Exhen
 // @connect        *
 // @grant          GM_xmlhttpRequest
@@ -18,7 +18,7 @@
 // @include        https://movie.douban.com/
 // @match          https://movie.douban.com/*
 // @exclude        https://*/follows_comments
-// @version        2018052501
+// @version        2018052701
 // @run-at         document-start
 // @namespace      exhen_js 
 
@@ -1202,7 +1202,7 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                 if (RegExp('/' + current_id + '/').test($('.article .indent').html())) { update_bl(++i); return; }
                 var title, posterid;
                 function append_movie(title, posterid) {
-                    var block_html = $('<table width="100%" class=""><tbody><tr class="item"><td width="100" valign="top"><a class="nbg" href="https://movie.douban.com/subject/' + bl_list[i] + '/" title="' + title + '"><img src="https://img3.doubanio.com/view/photo/s_ratio_poster/public/' + posterid + '.webp" width="75" alt="' + title + '" class=""></a></td><td valign="top"><div class="pl2"><a href="https://movie.douban.com/subject/' + bl_list[i] + '/" class="">' + title + '</a></div></td></tr></tbody></table><p class="ul"></p>');
+                    var block_html = $('<table width="100%" class=""><tbody><tr class="item"><td width="100" valign="top"><a class="nbg" href="https://movie.douban.com/subject/' + bl_list[i] + '/" title="' + title + '"><img src="https://img3.doubanio.com/view/photo/s_ratio_poster/public/' + posterid + '" width="75" alt="' + title + '" class=""></a></td><td valign="top"><div class="pl2"><a href="https://movie.douban.com/subject/' + bl_list[i] + '/" class="">' + title + '</a></div></td></tr></tbody></table><p class="ul"></p>');
                     var remove_blocklist_button = $('<a class="j remove_blocklist" style="display: inline-block; zoom: 1; margin-right: 5px; border: 1px solid #bbb; padding: 2px 14px 1px; border-radius: 2px; color: #111;">解除屏蔽' + current_id + '</a>');
                     remove_blocklist_button.click(function () {
                         GM_setValue('bl', GM_getValue('bl', '').replace('$' + current_id, ''));
@@ -1374,7 +1374,7 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                                                 enable_site = 1;
                                                 GM_setValue(site, enable_site);
                                             }
-                                            if (!enable_site) return;
+                                            if (!enable_site) continue;
                                             // add this site to the right column
 
                                             //console.log('url', url);
@@ -1438,9 +1438,62 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
         }
 
 
+
+        var flag_doulist = GM_getValue('doulist');
+        if (flag_doulist) {
+            var doulist_nav = $('<a style="color:#27a">豆列搜索</a>');
+            doulist_nav.mouseover(function () {
+                $(this).css('color', 'white');
+            })
+            doulist_nav.mouseout(function () {
+                $(this).css('color', '#27a');
+            })
+
+            doulist_nav.click(function () {
+                $('div#wrapper').empty();
+                $('div#wrapper').append('<div id="content"> <h1>豆列搜索</h1> <div class="grid-16-8 clearfix"> <div class="article"> <div class="indent"> <div class="movie-list"></div> </div> </div> <div class="aside"> <div> <h2>豆列搜索 · · · · · ·</h2> <div> <span> <p> <form id="form-doulist"> <input class="doulist" id="input-doulist" placeholder="Criterion, 46534919, ..." value="" /input> <input type="button" id="doulist-submit" value="search" /input> </form> </p> </span> <span style="" class="search_result c-aside-body"></span> </div> </div> <div class="doulist_intro"> <h2>豆列搜索说明 · · · · · ·</h2> <p>输入你想搜的关键词，点击搜索。就这么简单。</p> <p>因为懒，没有做翻页，所以只抓前100条搜索结果。翻页功能以后没准会加入。</p> </div> </div> </div> </div>');
+                $('#doulist-submit').click(function () {
+                    var doulist = document.getElementById("input-doulist").value;
+                    //console.log(artist);
+                    $('div.movie-list').empty();
+                    $('.c-aside').remove();
+                    var get_doulist = function (doulist, page) {
+                        if (page >= 101) return;
+                        getDoc('https://cn.bing.com/search?q=site%3awww.douban.com%2fdoulist+46' + doulist + '&first=' + page, null, function (doc, res, meta) {
+                            if ($('#b_results .b_algo a', doc).length == 0) {
+                                $('div.movie-list').append('没有找到相关豆列');
+                            }
+                            else {
+                                $('#b_results .b_algo a', doc).each(function () {
+                                    var id = $(this).attr('href').split('/')[4];
+                                    if (!id) return;
+                                    var title_cn = $(this).text().replace(/(\(豆瓣\)|\s-\s豆瓣电影|\s-\s豆瓣)/, '');
+                                    var detail = $(this).parent().next().html();
+                                    $('div.movie-list').append('<div class="' + id + '"><h2 style="font-size:13px;"><a href="https://www.douban.com/doulist/' + id + '">' + title_cn + '</a></h2><div></div></div><div class="tags">' + detail + '<p class="ul"></p></div>');
+                                })
+                            }
+                            page += 10;
+                            if (page > 11) {
+                                console.log('sleep 1000');
+                                sleep(1000);
+                            }
+                            get_doulist(doulist, page);
+                        });
+                    }
+                    get_doulist(doulist, 1);
+
+                });
+            })
+
+            $('div.nav-items ul').append('<li></li>');
+            $('div.nav-items ul li').last().append(doulist_nav);
+
+        }
+
+
         // add Script Control Panel
         var cp_nav = $('<a class="lnk-remind">功能开关</a>')
-        var cp_box = $('<div class="more-items" style="width: 180px;"><table cellpadding="0" cellspacing="0"><tbody><tr><td><a>影人资源</a></td><td><div class="artist"></div></td></tr><tr><td><a>电影黑名单</a></td><td><div class="blacklist"></div></td></tr><tr><td><a>原图链接</a></td><td><div class="poster"></div></td></tr><tr><td><a>生成信息</a></td><td><div class="infogen"></div></td></tr><tr><td><a>PT资源</a></td><td><div class="ptsite"></div></td></tr><tr><td><a>PT自动搜索</a></td><td><div class="ptsite_auto"></div></td></tr><tr><td><a>公网资源</a></td><td><div class="offlinesite"></div></td></tr><tr><td><a>公网自动搜索</a></td><td><div class="offlinesite_auto"></div></td></tr><tr><td><a>字幕资源</a></td><td><div class="subsite"></div></td></tr><tr><td><a>字幕自动搜索</a></td><td><div class="subsite_auto"></div></td></tr><tr><td><a>更多评分</a></td><td><div class="morerating"></div></td></tr><tr><td><a class="pt_site_switch">资源站点开关</a></td></tr></tbody></table></div>');
+        var cp_box = $('<div class="more-items" style="width: 180px;"><table cellpadding="0" cellspacing="0"><tbody><tr><td><a>豆列搜索</a></td><td><div class="doulist"></div></td></tr><tr><td><a>影人资源</a></td><td><div class="artist"></div></td></tr><tr><td><a>电影黑名单</a></td><td><div class="blacklist"></div></td></tr><tr><td><a>原图链接</a></td><td><div class="poster"></div></td></tr><tr><td><a>生成信息</a></td><td><div class="infogen"></div></td></tr><tr><td><a>PT资源</a></td><td><div class="ptsite"></div></td></tr><tr><td><a>PT自动搜索</a></td><td><div class="ptsite_auto"></div></td></tr><tr><td><a>公网资源</a></td><td><div class="offlinesite"></div></td></tr><tr><td><a>公网自动搜索</a></td><td><div class="offlinesite_auto"></div></td></tr><tr><td><a>字幕资源</a></td><td><div class="subsite"></div></td></tr><tr><td><a>字幕自动搜索</a></td><td><div class="subsite_auto"></div></td></tr><tr><td><a>更多评分</a></td><td><div class="morerating"></div></td></tr><tr><td><a class="pt_site_switch">资源站点开关</a></td></tr></tbody></table></div>');
 
         cp_nav.click(function () {
             if ($('div.top-nav-info .cp_nav').hasClass('more-active')) {
