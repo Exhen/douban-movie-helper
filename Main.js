@@ -18,7 +18,7 @@
 // @include        https://movie.douban.com/
 // @match          https://movie.douban.com/*
 // @exclude        https://*/follows_comments
-// @version        2018052701
+// @version        2018052803
 // @run-at         document-start
 // @namespace      exhen_js 
 
@@ -1311,7 +1311,7 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
             artist_nav.click(function () {
                 $('div#wrapper').empty();
                 $('div#wrapper').append('<div id="content"><h1>导演资源搜索</h1><div class="grid-16-8 clearfix"><div class="article"><div class="indent"><div class="movie-list"></div></div></div><div class="aside"><div><h2>导演检索 · · · · · ·</h2><div><span><p><form id="form-artist"><input class="artist" id="input-artist" placeholder="诺兰, nm0634240, ..." value="" /input><input type="button" id="artist-submit" value="search" /input></form></p></span><span style="" class="search_result c-aside-body"></span></div></div><div class="artist_intro"><h2>导演资源说明 · · · · · ·</h2><p>影人资源可以列出某导演的全部执导作品并加以搜索。</p><p>此功能可以弥补一些站点没有“Artist”“Collection”的缺憾。</p></div><div><h2>使用帮助 · · · · · ·</h2><p>输入导演名称，点击搜索。在搜索结果中点击你想搜的导演即可。</p><p>由于【某些原因】，导演作品列表采取IMDB数据库中的信息。若和豆瓣影人信息有出入，请谅解。</p><p>目前仅支持导演作品，如需按演员搜索功能，请email：exhen32@live.com请求开发。</p></div></div></div></div>');
-                $('#artist-submit').click(function () {
+                $('#form-artist').submit(function () {
                     var artist = document.getElementById("input-artist").value;
                     //console.log(artist);
                     $('span.search_result').empty();
@@ -1452,14 +1452,14 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
             doulist_nav.click(function () {
                 $('div#wrapper').empty();
                 $('div#wrapper').append('<div id="content"> <h1>豆列搜索</h1> <div class="grid-16-8 clearfix"> <div class="article"> <div class="indent"> <div class="movie-list"></div> </div> </div> <div class="aside"> <div> <h2>豆列搜索 · · · · · ·</h2> <div> <span> <p> <form id="form-doulist"> <input class="doulist" id="input-doulist" placeholder="Criterion, 46534919, ..." value="" /input> <input type="button" id="doulist-submit" value="search" /input> </form> </p> </span> <span style="" class="search_result c-aside-body"></span> </div> </div> <div class="doulist_intro"> <h2>豆列搜索说明 · · · · · ·</h2> <p>输入你想搜的关键词，点击搜索。就这么简单。</p> <p>因为懒，没有做翻页，所以只抓前100条搜索结果。翻页功能以后没准会加入。</p> </div> </div> </div> </div>');
-                $('#doulist-submit').click(function () {
+                $('#form-doulist').submit(function () {
                     var doulist = document.getElementById("input-doulist").value;
                     //console.log(artist);
                     $('div.movie-list').empty();
                     $('.c-aside').remove();
                     var get_doulist = function (doulist, page) {
                         if (page >= 101) return;
-                        getDoc('https://cn.bing.com/search?q=site%3awww.douban.com%2fdoulist+46' + doulist + '&first=' + page, null, function (doc, res, meta) {
+                        getDoc('https://cn.bing.com/search?q=site%3awww.douban.com%2fdoulist+' + doulist + '&first=' + page, null, function (doc, res, meta) {
                             if ($('#b_results .b_algo a', doc).length == 0) {
                                 $('div.movie-list').append('没有找到相关豆列');
                             }
@@ -1471,13 +1471,14 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                                     var detail = $(this).parent().next().html();
                                     $('div.movie-list').append('<div class="' + id + '"><h2 style="font-size:13px;"><a href="https://www.douban.com/doulist/' + id + '">' + title_cn + '</a></h2><div></div></div><div class="tags">' + detail + '<p class="ul"></p></div>');
                                 })
+                                page += 10;
+                                if (page > 11) {
+                                    //console.log('sleep 1000');
+                                    sleep(1000);
+                                }
+                                get_doulist(doulist, page);
                             }
-                            page += 10;
-                            if (page > 11) {
-                                console.log('sleep 1000');
-                                sleep(1000);
-                            }
-                            get_doulist(doulist, page);
+
                         });
                     }
                     get_doulist(doulist, 1);
