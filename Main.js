@@ -18,9 +18,9 @@
 // @include        https://movie.douban.com/
 // @match          https://movie.douban.com/*
 // @exclude        https://*/follows_comments
-// @version        2018052803
+// @version        2018052903
 // @run-at         document-start
-// @namespace      exhen_js 
+// @namespace      exhen_js
 
 // ==/UserScript==
 
@@ -1202,7 +1202,7 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                 if (RegExp('/' + current_id + '/').test($('.article .indent').html())) { update_bl(++i); return; }
                 var title, posterid;
                 function append_movie(title, posterid) {
-                    var block_html = $('<table width="100%" class=""><tbody><tr class="item"><td width="100" valign="top"><a class="nbg" href="https://movie.douban.com/subject/' + bl_list[i] + '/" title="' + title + '"><img src="https://img3.doubanio.com/view/photo/s_ratio_poster/public/' + posterid + '" width="75" alt="' + title + '" class=""></a></td><td valign="top"><div class="pl2"><a href="https://movie.douban.com/subject/' + bl_list[i] + '/" class="">' + title + '</a></div></td></tr></tbody></table><p class="ul"></p>');
+                    var block_html = $('<table width="100%" class=""><tbody><tr class="item"><td width="100" valign="top"><a class="nbg" href="https://movie.douban.com/subject/' + bl_list[i] + '/" title="' + title + '"><img src="https://img3.doubanio.com/view/photo/s_ratio_poster/public/' + posterid + '.jpg" width="75" alt="' + title + '" class=""></a></td><td valign="top"><div class="pl2"><a href="https://movie.douban.com/subject/' + bl_list[i] + '/" class="">' + title + '</a></div></td></tr></tbody></table><p class="ul"></p>');
                     var remove_blocklist_button = $('<a class="j remove_blocklist" style="display: inline-block; zoom: 1; margin-right: 5px; border: 1px solid #bbb; padding: 2px 14px 1px; border-radius: 2px; color: #111;">解除屏蔽' + current_id + '</a>');
                     remove_blocklist_button.click(function () {
                         GM_setValue('bl', GM_getValue('bl', '').replace('$' + current_id, ''));
@@ -1310,7 +1310,7 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
 
             artist_nav.click(function () {
                 $('div#wrapper').empty();
-                $('div#wrapper').append('<div id="content"><h1>导演资源搜索</h1><div class="grid-16-8 clearfix"><div class="article"><div class="indent"><div class="movie-list"></div></div></div><div class="aside"><div><h2>导演检索 · · · · · ·</h2><div><span><p><form id="form-artist"><input class="artist" id="input-artist" placeholder="诺兰, nm0634240, ..." value="" /input><input type="button" id="artist-submit" value="search" /input></form></p></span><span style="" class="search_result c-aside-body"></span></div></div><div class="artist_intro"><h2>导演资源说明 · · · · · ·</h2><p>影人资源可以列出某导演的全部执导作品并加以搜索。</p><p>此功能可以弥补一些站点没有“Artist”“Collection”的缺憾。</p></div><div><h2>使用帮助 · · · · · ·</h2><p>输入导演名称，点击搜索。在搜索结果中点击你想搜的导演即可。</p><p>由于【某些原因】，导演作品列表采取IMDB数据库中的信息。若和豆瓣影人信息有出入，请谅解。</p><p>目前仅支持导演作品，如需按演员搜索功能，请email：exhen32@live.com请求开发。</p></div></div></div></div>');
+                $('div#wrapper').append('<div id="content"><h1>导演资源搜索</h1><div class="grid-16-8 clearfix"><div class="article"><div class="indent"><div class="movie-list"></div></div></div><div class="aside"><div><h2>导演检索 · · · · · ·</h2><div><span><p><form id="form-artist"><input class="artist" id="input-artist" placeholder="诺兰, nm0634240, ..." value="" /input><input type="submit" id="artist-submit" value="search" /input></form></p></span><span style="" class="search_result c-aside-body"></span></div></div><div class="artist_intro"><h2>导演资源说明 · · · · · ·</h2><p>影人资源可以列出某导演的全部执导作品并加以搜索。</p><p>此功能可以弥补一些站点没有“Artist”“Collection”的缺憾。</p></div><div><h2>使用帮助 · · · · · ·</h2><p>输入导演名称，点击搜索。在搜索结果中点击你想搜的导演即可。</p><p>由于【某些原因】，导演作品列表采取IMDB数据库中的信息。若和豆瓣影人信息有出入，请谅解。</p><p>目前仅支持导演作品，如需按演员搜索功能，请email：exhen32@live.com请求开发。</p></div></div></div></div>');
                 $('#form-artist').submit(function () {
                     var artist = document.getElementById("input-artist").value;
                     //console.log(artist);
@@ -1430,6 +1430,7 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                             })
                         });
                     });
+                    return false;
                 })
             })
             $('div.nav-items ul').append('<li></li>');
@@ -1451,7 +1452,7 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
 
             doulist_nav.click(function () {
                 $('div#wrapper').empty();
-                $('div#wrapper').append('<div id="content"> <h1>豆列搜索</h1> <div class="grid-16-8 clearfix"> <div class="article"> <div class="indent"> <div class="movie-list"></div> </div> </div> <div class="aside"> <div> <h2>豆列搜索 · · · · · ·</h2> <div> <span> <p> <form id="form-doulist"> <input class="doulist" id="input-doulist" placeholder="Criterion, 46534919, ..." value="" /input> <input type="button" id="doulist-submit" value="search" /input> </form> </p> </span> <span style="" class="search_result c-aside-body"></span> </div> </div> <div class="doulist_intro"> <h2>豆列搜索说明 · · · · · ·</h2> <p>输入你想搜的关键词，点击搜索。就这么简单。</p> <p>因为懒，没有做翻页，所以只抓前100条搜索结果。翻页功能以后没准会加入。</p> </div> </div> </div> </div>');
+                $('div#wrapper').append('<div id="content"> <h1>豆列搜索</h1> <div class="grid-16-8 clearfix"> <div class="article"> <div class="indent"> <div class="movie-list"></div> </div> </div> <div class="aside"> <div> <h2>豆列搜索 · · · · · ·</h2> <div> <span> <p> <form id="form-doulist"> <input class="doulist" id="input-doulist" placeholder="Criterion, 46534919, ..." value="" /input> <input type="submit" id="doulist-submit" value="search" /input> </form> </p> </span> <span style="" class="search_result c-aside-body"></span> </div> </div> <div class="doulist_intro"> <h2>豆列搜索说明 · · · · · ·</h2> <p>输入你想搜的关键词，点击搜索。就这么简单。</p> <p>因为懒，没有做翻页，所以只抓前100条搜索结果。翻页功能以后没准会加入。</p> </div> </div> </div> </div>');
                 $('#form-doulist').submit(function () {
                     var doulist = document.getElementById("input-doulist").value;
                     //console.log(artist);
@@ -1482,7 +1483,7 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                         });
                     }
                     get_doulist(doulist, 1);
-
+                    return false;
                 });
             })
 
