@@ -19,7 +19,7 @@
 // @include        https://movie.douban.com/
 // @match          https://movie.douban.com/*
 // @exclude        https://*/follows_comments
-// @version        2018060105
+// @version        2018060601
 // @run-at         document-start
 // @namespace      exhen_js
 
@@ -505,7 +505,7 @@ var update_sites_list = function () {
         }
         GM_setValue('sites_list', sites_list)
     }
-    GM_setValue('sites_list',sites_list);
+    GM_setValue('sites_list', sites_list);
 }
 update_sites_list();
 var sites_list = GM_getValue('sites_list', 'none');
@@ -1416,27 +1416,56 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                                     $('div.movie-list').empty().append('<p class="ul first"></p>');
                                     var id = $(this).attr('id');
                                     var name = $(this).attr('name');
-                                    $('div.movie-list').prepend('<h2>' + name + '导演作品 · · · · · · </h2>');
-                                    getDoc('https://www.imdb.com/name/' + id + '/?ref_=nv_sr_1#director', null, function (doc, res, meta) {
-                                        $('.filmo-category-section div.filmo-row', doc).each(function () {
-                                            if ($(this).attr('id').startsWith('director-')) {
-                                                var tt = $(this).attr('id');
+
+                                    getDoc('https://www.imdb.com/name/' + id + '/#director', null, function (doc, res, meta) {
+                                        var item_num = parseInt($('#filmo-head-director', doc).text().split('Director (')[1].split(' credits')[0]);
+                                        $('div.movie-list').prepend('<h2>' + name + '导演作品 （' + item_num + '） · · · · · · </h2>');
+                                        var get_movie_info = function (num) {
+                                            if (num >= $('.filmo-category-section div.filmo-row', doc).length) { return; }
+                                            if ($($('.filmo-category-section div.filmo-row', doc)[num]).attr('id').startsWith('director-')) {
+                                                var tt = $($('.filmo-category-section div.filmo-row', doc)[num]).attr('id');
                                                 tt = tt.slice(9);
                                                 //console.log(tt);
-                                                var title_en = $(this).find('b a').text();
+                                                var title_en = $($('.filmo-category-section div.filmo-row', doc)[num]).find('b a').text();
+                                                var year = parseInt($($('.filmo-category-section div.filmo-row', doc)[num]).find('.year_column').text());
+                                                //console.log(year);
                                                 getDoc('https://cn.bing.com/search?q=site%3Amovie.douban.com%2Fsubject%2F+%2BIMDb链接%3A+%2B' + tt, null, function (doc3, res, meta) {
                                                     var title_cn = $('#b_results .b_algo a', doc3).first().text().replace(/(\(豆瓣\)|\s-\s豆瓣电影)/, '');
                                                     var douban_link = $('#b_results .b_algo a', doc3).first().attr('href');
                                                     if (douban_link) {
                                                         var douban_id = douban_link.split('/')[4];
+                                                        getDoc()
                                                     }
 
-                                                    title_cn = title_cn == '' ? '暂无条目' : title_cn;
-                                                    $('div.movie-list').append('<div class="' + tt + '"><h2 style="font-size:13px;">' + title_cn + '<span style="    color: grey;font-size: 10px;margin-left: 10px;margin-right: 5px;">' + title_en + '</span>' + '<span style="    color: grey;font-size: 10px;margin-left: 5px;margin-right: 5px;"><a href="https://www.imdb.com/title/' + tt + '">imdb:' + tt + '</a></span><span style="    color: grey;font-size: 10px;margin-left: 5px;margin-right: 5px;"><a href="' + douban_link + '">dbid:' + douban_id + '</a></span></h2><div></div></div><div class="tags"><p class="ul"></p></div>');
-                                                    $('td div.director').append('</br>');
+                                                    title_cn = title_cn == '' ? '豆瓣暂无条目' : title_cn.split(' ')[0];
+                                                    var movie_item = $('<div class="' + tt + '" year="' + year + '"><h2 style="font-size:13px;">' + title_cn + ' （' + year + '）<span style="    color: grey;font-size: 10px;margin-left: 10px;margin-right: 5px;">' + title_en + '</span>' + '<span style="    color: grey;font-size: 10px;margin-left: 5px;margin-right: 5px;"><a href="https://www.imdb.com/title/' + tt + '"> imdb:' + tt + ' </a></span>\t<span style="    color: grey;font-size: 10px;margin-left: 5px;margin-right: 5px;"><a href="' + douban_link + '">dbid:' + douban_id + '</a></span></h2><div></div></div><div class="tags"><p class="ul"></p></div></br>');
+                                                    // if ($('div.movie-list div').length == 0) {
+                                                    //     $('div.movie-list').append(movie_item);
+                                                    // }
+                                                    // else {
+                                                    //     var bigger_item = $('div.movie-list div:even').filter(function () {
+                                                    //         return (year > $(this).attr('year'));
+                                                    //     }).first();
+                                                    //     if (bigger_item.length) { bigger_item.next().after(movie_item); }
+                                                    //     else {
+                                                    //         $('div.movie-list').prepend(movie_item);
+                                                    //     }
+
+                                                    // }
+                                                    $('div.movie-list').append(movie_item);
+                                                    get_movie_info(++num);
                                                 })
                                             }
-                                        });
+                                            else {
+                                                get_movie_info(++num);
+                                            }
+                                        }
+                                        get_movie_info(0);
+
+
+                                        // $('.filmo-category-section div.filmo-row', doc).each(function () {
+
+                                        // });
 
                                         var site_pt = $(aside_html);
                                         site_pt.addClass('ptsite');
@@ -1453,10 +1482,10 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                                             // add this site to the right column
 
                                             //console.log('url', url);
-                                            var link = $('<a style="background-color: rgb(245, 245, 245);"></a>');
-                                            link.addClass(site);
-                                            link.html(site);
-                                            link.click(function () {
+                                            var link2 = $('<a style="background-color: rgb(245, 245, 245);"></a>');
+                                            link2.addClass(site);
+                                            link2.html(site);
+                                            link2.click(function () {
                                                 $('.ptsite-body a').css('background-color', '#f5f5f5');
 
                                                 $('div.movie-list div div').empty();
@@ -1488,7 +1517,7 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
 
                                                             }
                                                             if (result) {
-                                                                $('.' + tt + ' div').append('<a href="' + url.source + '">' + url.source + '</a>');
+                                                                $('.' + tt + ' div').append('<a href="' + url.source + '">下载链接：' + tt + '</a>');
                                                             }
                                                             else {
                                                                 $('.' + tt + ' div').append('暂无资源');
@@ -1497,7 +1526,7 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                                                     }
                                                 })
                                             })
-                                            $('.ptsite-body ul').append(link);
+                                            $('.ptsite-body ul').append(link2);
                                         }
                                     });
                                 })
@@ -1527,19 +1556,22 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
 
             doulist_nav.click(function () {
                 $('div#wrapper').empty();
-                $('div#wrapper').append('<div id="content"> <h1>豆列搜索</h1> <div class="grid-16-8 clearfix"> <div class="article"> <div class="indent"> <div class="movie-list"></div> </div> </div> <div class="aside"> <div> <h2>豆列搜索 · · · · · ·</h2> <div> <span> <p> <form id="form-doulist"> <input class="doulist" id="input-doulist" placeholder="Criterion, 46534919, ..." value="" /input> <input type="submit" id="doulist-submit" value="search" /input> </form> </p> </span> <span style="" class="search_result c-aside-body"></span> </div> </div> <div class="doulist_intro"> <h2>豆列搜索说明 · · · · · ·</h2> <p>输入你想搜的关键词，点击搜索。就这么简单。</p> <p>因为懒，没有做翻页，所以只抓前100条搜索结果。翻页功能以后没准会加入。</p> </div> </div> </div> </div>');
+                $('div#wrapper').append('<div id="content"> <h1>豆列搜索</h1> <div class="grid-16-8 clearfix"> <div class="article"> <div class="indent"> <div class="movie-list"></div> </div> </div> <div class="aside"> <div> <h2>豆列搜索 · · · · · ·</h2> <div> <span> <p> <form id="form-doulist"> <input class="doulist" id="input-doulist" placeholder="Criterion, 46534919, ..." value="" /input> <input type="submit" id="doulist-submit" value="search" /input> </form> </p> </span> <span style="" class="search_result c-aside-body"></span> </div> </div> <div class="doulist_intro"> <h2>豆列搜索说明 · · · · · ·</h2> <p>输入你想搜的关键词，点击搜索。就这么简单。</p> <p>新加入翻页功能，欢迎测试。</p> </div> </div> </div> </div>');
                 $('#form-doulist').submit(function () {
                     var doulist = document.getElementById("input-doulist").value;
                     //console.log(artist);
                     $('div.movie-list').empty();
                     $('.c-aside').remove();
                     var get_doulist = function (doulist, page) {
-                        if (page >= 101) return;
+                        // if (page >= 101) return;
+                        $('div.movie-list a.more').text('加载中');
                         getDoc('https://cn.bing.com/search?q=site%3awww.douban.com%2fdoulist+' + doulist + '&first=' + page, null, function (doc, res, meta) {
                             if ($('#b_results .b_algo a', doc).length == 0) {
+                                $('div.movie-list a.more').remove();
                                 $('div.movie-list').append('没有找到相关豆列');
                             }
                             else {
+                                $('div.movie-list a.more').remove();
                                 $('#b_results .b_algo a', doc).each(function () {
                                     var id = $(this).attr('href').split('/')[4];
                                     if (!id) return;
@@ -1547,12 +1579,12 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                                     var detail = $(this).parent().next().html();
                                     $('div.movie-list').append('<div class="' + id + '"><h2 style="font-size:13px;"><a href="https://www.douban.com/doulist/' + id + '">' + title_cn + '</a></h2><div></div></div><div class="tags">' + detail + '<p class="ul"></p></div>');
                                 })
-                                page += 10;
-                                if (page > 11) {
-                                    //console.log('sleep 1000');
-                                    sleep(1000);
-                                }
-                                get_doulist(doulist, page);
+                                $('div.movie-list').append('<a href="javascript:;"style="display: block; height: 34px; line-height: 34px; text-align: center; font-size: 14px; background: #f7f7f7;" class="more">加载更多</a>')
+                                $('div.movie-list a.more').click(function(){
+                                    get_doulist(doulist,(page+=10));
+                                });
+                                
+                                //get_doulist(doulist, page);
                             }
 
                         });
