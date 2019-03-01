@@ -187,15 +187,11 @@ var sitesOnline = {
                 "title": "http://www.zimuku.cn/search?q=",
                 "selector": "div.box.clearfix div.item.prel.clearfix"
             },
-            "字幕天堂": {
-                "title": "http://www.zimuku.cn/search?q=",
-                "selector": "div.box.clearfix div.item.prel.clearfix"
-            },
             "字幕组": {
-                "title": "http://www.zimuzu.tv/search/index?type=subtitle&keyword=",
+                "title": "http://www.zimuzu.io/search/index?type=subtitle&keyword=",
                 "selector": ".search-result li"
             },
-            "sub HD": {
+            "subHD": {
                 "title": "http://subhd.com/search/",
                 "selector": "div.col-md-9 div.box"
             },
