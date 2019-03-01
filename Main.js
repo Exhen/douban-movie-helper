@@ -584,35 +584,66 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
 
             /************** 胖鸟API **************/
             {
-                var flag_pniao = GM_getValue('pniao');
-                if (flag_pniao) {
-                    var douban_id = window.location.href.split('/')[4];
-                    getJSON('http://www.pniao.com/API/dbApi/dbPlugin/' + douban_id, function (res, url) {
-                        if (res.msg == 'not found movie') {
-                            return;
-                        }
-                        var pniao_div = $('<div class="direct_link" id="subject-doulist"> <h2 style="margin:0"> <i class="">资源直链</i> · · · · · ·<br><span style="color:grey;font-size:9px">感谢<a href="http://www.pniao.com">【胖鸟电影】</a>提供数据支持</span><span class="pl"> </span> </h2> <ul> </ul> </div>');
-                        $('#content div.aside').prepend(pniao_div);
-                        console.log(res);
-                        var pniao_id = res[0].id;
-                        var pniao_title = res[0].title;
-                        console.log(pniao_id);
-                        var downList_JSON = eval(res[0].downList);
-                        for (link in downList_JSON) {
-                            console.log('link', link);
-                            var link_div = $('<li> <a href="' + decodeURIComponent(downList_JSON[link].dUrl) + '" >' + (downList_JSON[link].dTitle ? downList_JSON[link].dTitle : '该资源暂无名称') + '</a> <span>(胖鸟)</span> </li>');
-                            $('div.direct_link ul').append(link_div);
-                        }
-                        var downType = eval('(' + res[0].downType + ')');
-                        console.log(downType);
-                        $('div.direct_link ul').append('<li><span>全部[度盘(' + (downType.bdpan ? downType.bdpan : 0) + ')+磁力(' + (downType.magnet ? downType.magnet : 0) + ')+电驴(' + (downType.ed2k ? downType.ed2k : 0) + ')+字幕(' + (downType.zimu ? downType.zimu : 0) + ')]资源见</span> <a href="http://www.pniao.com/Mov/one/' + pniao_id + '" >' + pniao_title + '</a>  </li>');
-                    })
-                }
+                // var flag_pniao = GM_getValue('pniao');
+                // if (flag_pniao) {
+                //     var douban_id = window.location.href.split('/')[4];
+                //     getJSON('http://www.pniao.com/API/dbApi/dbPlugin/' + douban_id, function (res, url) {
+                //         if (res.msg == 'not found movie') {
+                //             return;
+                //         }
+                //         var pniao_div = $('<div class="direct_link" id="subject-doulist"> <h2 style="margin:0"> <i class="">资源直链</i> · · · · · ·<br><span style="color:grey;font-size:9px">感谢<a href="http://www.pniao.com">【胖鸟电影】</a>提供数据支持</span><span class="pl"> </span> </h2> <ul> </ul> </div>');
+                //         $('#content div.aside').prepend(pniao_div);
+                //         console.log(res);
+                //         var pniao_id = res[0].id;
+                //         var pniao_title = res[0].title;
+                //         console.log(pniao_id);
+                //         var downList_JSON = eval(res[0].downList);
+                //         for (link in downList_JSON) {
+                //             console.log('link', link);
+                //             var link_div = $('<li> <a href="' + decodeURIComponent(downList_JSON[link].dUrl) + '" >' + (downList_JSON[link].dTitle ? downList_JSON[link].dTitle : '该资源暂无名称') + '</a> <span>(胖鸟)</span> </li>');
+                //             $('div.direct_link ul').append(link_div);
+                //         }
+                //         var downType = eval('(' + res[0].downType + ')');
+                //         console.log(downType);
+                //         $('div.direct_link ul').append('<li><span>全部[度盘(' + (downType.bdpan ? downType.bdpan : 0) + ')+磁力(' + (downType.magnet ? downType.magnet : 0) + ')+电驴(' + (downType.ed2k ? downType.ed2k : 0) + ')+字幕(' + (downType.zimu ? downType.zimu : 0) + ')]资源见</span> <a href="http://www.pniao.com/Mov/one/' + pniao_id + '" >' + pniao_title + '</a>  </li>');
+                //     })
+                // }
             }
             /************** 胖鸟API 结束 **************/
 
 
 
+            /************** PreDB **************/
+            {
+                var flag_PreDB = GM_getValue('PreDB');
+                if (flag_PreDB) {
+                    let title = title_en = $('#content > h1 > span')[0].textContent.split(' ');
+                    title = title.shift();
+                    title_en = title_en.join(' ').trim();
+                    getDoc('http://predb.me/?search=' +title_en ,null, function (doc,res, meta) {
+                        
+                        var PreDB_div = $('<div class="direct_link" id="subject-doulist"> <h2 style="margin:0"> <i class="">PreDB查询</i> · · · · · ·<br><span class="pl"> </span> </h2> <ul> </ul> </div>');
+                        $('#content div.aside').prepend(PreDB_div);
+
+
+                        if (res.responseText.match(/Nothing found/)) {
+                            let link_div = $(`<li> <a href="http://predb.me/?search=${title_en}">没有找到任何资源</a> <span>(点这手动搜索)</span> </li>`);
+                            $('div.direct_link ul').append(link_div);
+                        }else{
+                            for (var i=0;i<Math.min(parseInt($('span.release-count',doc).text()),3);i++){
+                                let PDBTitle=$(`div.post:eq(${i})`,doc).find('.p-c-title a').text();
+                                let PDBId=$(`div.post:eq(${i})`,doc).attr('id');
+                                let PDBDate=$(`div.post:eq(${i})`,doc).find('.p-c-time .t-d').text();
+                                let link_div = $(`<li> <a href="http://predb.me/?post=${PDBId}">${PDBTitle}</a> <span>(${PDBDate})</span> </li>`);
+                                $('div.direct_link ul').append(link_div);  
+                            }
+                        }
+
+                    
+                    })
+                }
+            }
+            /************** PreDB 结束 **************/
 
             /************** 搜索group主体 **************/
             {
@@ -1370,7 +1401,7 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
         /************** 功能开关 **************/
         { // add Script Control Panel
             var cp_nav = $('<a class="lnk-remind">功能开关</a>')
-            var cp_box = $('<div class="more-items" style="width: 180px;"> <table cellpadding="0" cellspacing="0"> <tbody> <tr> <td> <a>用户广播搜索</a> </td> <td> <div class="doushuo"></div> </td> </tr> <tr> <td> <a>资源直链</a> </td> <td> <div class="pniao"></div> </td> </tr> <tr> <td> <a>美化背景</a> </td> <td> <div class="posterbg"></div> </td> </tr> <tr> <td> <a>豆列搜索</a> </td> <td> <div class="doulist"></div> </td> </tr> <tr> <td> <a>影人资源</a> </td> <td> <div class="artist"></div> </td> </tr> <tr> <td> <a>电影黑名单</a> </td> <td> <div class="blacklist"></div> </td> </tr> <tr> <td> <a>原图链接</a> </td> <td> <div class="poster"></div> </td> </tr> <tr> <td> <a>生成信息</a> </td> <td> <div class="infogen"></div> </td> </tr> <tr> <td> <a>PT资源</a> </td> <td> <div class="ptsite"></div> </td> </tr> <tr> <td> <a>PT自动搜索</a> </td> <td> <div class="ptsite_auto"></div> </td> </tr> <tr> <td> <a>公网资源</a> </td> <td> <div class="offlinesite"></div> </td> </tr> <tr> <td> <a>公网自动搜索</a> </td> <td> <div class="offlinesite_auto"></div> </td> </tr> <tr> <td> <a>字幕资源</a> </td> <td> <div class="subsite"></div> </td> </tr> <tr> <td> <a>字幕自动搜索</a> </td> <td> <div class="subsite_auto"></div> </td> </tr> <tr> <td> <a>更多评分</a> </td> <td> <div class="morerating"></div> </td> </tr> <tr> <td> <a class="pt_site_switch">资源站点开关</a> </td> </tr> <tr> <td> <a class="toplist">排行榜开关</a> </td> </tr> <tr> <td> <a class="pt_site_clear">清空站点缓存</a> </td> </tr> </tbody> </table> </div>');
+            var cp_box = $('<div class="more-items" style="width: 180px;"> <table cellpadding="0" cellspacing="0"> <tbody> <tr> <td> <a>用户广播搜索</a> </td> <td> <div class="doushuo"></div> </td> </tr> <tr> <td> <a>PreDB</a> </td> <td> <div class="PreDB"></div> </td> </tr> <tr> <td> <a>美化背景</a> </td> <td> <div class="posterbg"></div> </td> </tr> <tr> <td> <a>豆列搜索</a> </td> <td> <div class="doulist"></div> </td> </tr> <tr> <td> <a>影人资源</a> </td> <td> <div class="artist"></div> </td> </tr> <tr> <td> <a>电影黑名单</a> </td> <td> <div class="blacklist"></div> </td> </tr> <tr> <td> <a>原图链接</a> </td> <td> <div class="poster"></div> </td> </tr> <tr> <td> <a>生成信息</a> </td> <td> <div class="infogen"></div> </td> </tr> <tr> <td> <a>PT资源</a> </td> <td> <div class="ptsite"></div> </td> </tr> <tr> <td> <a>PT自动搜索</a> </td> <td> <div class="ptsite_auto"></div> </td> </tr> <tr> <td> <a>公网资源</a> </td> <td> <div class="offlinesite"></div> </td> </tr> <tr> <td> <a>公网自动搜索</a> </td> <td> <div class="offlinesite_auto"></div> </td> </tr> <tr> <td> <a>字幕资源</a> </td> <td> <div class="subsite"></div> </td> </tr> <tr> <td> <a>字幕自动搜索</a> </td> <td> <div class="subsite_auto"></div> </td> </tr> <tr> <td> <a>更多评分</a> </td> <td> <div class="morerating"></div> </td> </tr> <tr> <td> <a class="pt_site_switch">资源站点开关</a> </td> </tr> <tr> <td> <a class="toplist">排行榜开关</a> </td> </tr> <tr> <td> <a class="pt_site_clear">清空站点缓存</a> </td> </tr> </tbody> </table> </div>');
 
             cp_nav.click(function () {
                 if ($('div.top-nav-info .cp_nav').hasClass('more-active')) {
