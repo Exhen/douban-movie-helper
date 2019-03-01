@@ -197,11 +197,7 @@ var sitesOnline = {
             },
             "伪射手": {
                 "title": "http://assrt.net/sub/?searchword=",
-                "selector": "div.body div.subitem"
-            },
-            "163字幕": {
-                "title": "http://www.163sub.com/Search?id=",
-                "selector": "#main_narrow_bd div.subs_list"
+                "selector": "#resultsdiv a.introtitle"
             },
             "电波字幕": {
                 "title": "http://dbfansub.com/?s=",
