@@ -20,7 +20,7 @@
 // @match          https://movie.douban.com/*
 // @exclude        https://*/follows_comments*
 // @exclude        http*://*collections?show_followings=on
-// @version        2018092002
+// @version        2018092701
 // @run-at         document-start
 // @namespace      exhen_js
 
@@ -951,36 +951,11 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                         if (!after)
                             after = document.querySelector('h1');
                         after.insertAdjacentHTML('beforebegin', '<div class="top250" id="' + toplist + '"><span class="top250-no">' + (collection_list[toplist].top ? 'No.' : '#') + list_num + '</span><span class="top250-link"><a href="' + collection_list[toplist].href + '">' + collection_list[toplist].short_title + '</a></span></div> ');
-                        [].forEach.call(document.getElementsByClassName('top250'), function (e) {
-                            e.style.display = 'inline-block';
-                        });
+                        $('div.top250').css('display', 'inline-block');
                     }
                 }
             }
-            // console.log('all', $('.top250').length)
-            // var collection_priority1 = GM_getValue('collection_priority1', 'none');
-            // var collection_priority2 = GM_getValue('collection_priority2', 'none');
-            // if ($('.top250').length > 2 || ($('.top250').length >= 2 && (collection_priority1 == 'imdb_top250' || collection_priority2 == 'imdb_top250'))) {
-            //     $('.top250').hide();
-
-            //     $(`.top250#${collection_priority1}`).show();
-            //     $(`.top250#${collection_priority2}`).show();
-            //     console.log('visi1', $('.top250:visible').length);
-            //     if ($('.top250:visible').length < 2) {
-            //         if (collection_priority1 != 'imdb_top250' && collection_priority2 != 'imdb_top250') {
-            //             var r = 2 - $('.top250:visible').length;
-            //             var i = $('.top250:hidden').length - $('.top250:visible').length;
-            //             if (i >= r) {
-            //                 $('.top250:hidden').slice(0, r).show();
-            //             }
-            //             else {
-            //                 $('.top250:hidden').show();
-            //             }
-            //         }
-
-            //     }
-
-            // }
+          
 
             var flag_list = GM_getValue('imdb_top250', 'none');
             if (flag_list == 'none') {
@@ -988,15 +963,17 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                 GM_setValue('imdb_top250', 1);
             }
             if (flag_list) {
-                if (collection_priority1 !== 'douban_top250' && collection_priority2 !== 'douban_top250') {
-                    $('.top250').hide();
-                }
+                
 
                 getDoc('https://m.imdb.com/chart/top', null, function (doc, res, meta) {
                     var list = res.responseText.match(/data-tconst="(tt\d{7})"/g);
                     //console.log(list);
                     var number = list.indexOf('data-tconst="tt' + imdb_id + '"') + 1;
                     if (number < 1 || number > 250) return;
+
+                    if (collection_priority1 !== 'douban_top250' && collection_priority2 !== 'douban_top250') {
+                        $('.top250').hide();
+                    }
                     // inject css if needed
                     if (document.getElementsByClassName('top250').length === 0) {
                         var style = document.createElement('style');
