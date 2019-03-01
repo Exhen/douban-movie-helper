@@ -147,9 +147,9 @@ console.log(collectionList.CClist.short_title)
 // GM_setValue('sitesLocal',{"localsite": {"name": "本地资源"}})
 
 
-var sitesLocal=GM_getValue('sitesLocal','');
+var sitesLocal = GM_getValue('sitesLocal', '');
 var sitesList = sitesOnline;
-$.extend(sitesList,sitesLocal);
+$.extend(sitesList, sitesLocal);
 
 
 
@@ -161,7 +161,44 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
     var reservedValues = 'bl|flag_bl';
 
 
+    function Get_Search_Page(site, link_prefix, parser_func) {
+        //console.log("Start Searching in Site " + site + " ."+link_prefix );
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: link_prefix,
+            onload: function (res) {
+                //console.log(res.finalUrl);
+                if (/((login|action|verify|returnto)[.=]|\/login$)/.test(res.finalUrl)) {
+                    //console.log("May Not Login in Site " + site + ". With finalUrl: " + res.finalUrl);
+                } else if (/refresh: \d+; url=.+login.+/.test(res.responseHeaders)) {
 
+                } else {
+                    let responseText = res.responseText;
+                    // if (label.name==="AT") {//console.log(label.name);//console.log(res.finalUrl);//console.log(res.responseHeaders);//console.log(res.responseText);}
+                    if (typeof responseText === "undefined") {
+
+                    } else if (responseText.length < 800 && /login/.test(responseText)) {
+
+                    } else {
+                        //console.log("Get Search Pages Success in Site " + site + ".");
+                        var doc = (new DOMParser()).parseFromString(res.responseText, 'text/html');
+                        var body = doc.querySelector("body");
+                        var page = $(body); // 构造 jQuery 对象
+                        try {
+                            //console.log('trying', site);
+                            parser_func(res, doc, body, page);
+                            //console.log("End of Search in Site " + site + ".");
+                        } catch (error) {
+                            //console.log("An error occurred when parser in Site " + site + ". With Error information: " + error + ". Please opening a issues to report at https://github.com/Rhilip/PT-help/issues/2");
+                        }
+                    }
+                }
+            },
+            onerror: function (res) {
+                //console.log("An error occurred when searching in Site " + site + " .With finalUrl: " + res.finalUrl + ". Your computer may not be able to access this site.");
+            }
+        });
+    }
 
     var update_site = function (group, site, link_prefix, keyword, enable_search, selector) {
         // check if this site is enabled by user
@@ -172,44 +209,7 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
         }
         if (!enable_site) return;
 
-        function Get_Search_Page(site, link_prefix, parser_func) {
-            //console.log("Start Searching in Site " + site + " ."+link_prefix );
-            GM_xmlhttpRequest({
-                method: 'GET',
-                url: link_prefix,
-                onload: function (res) {
-                    //console.log(res.finalUrl);
-                    if (/((login|action|verify|returnto)[.=]|\/login$)/.test(res.finalUrl)) {
-                        //console.log("May Not Login in Site " + site + ". With finalUrl: " + res.finalUrl);
-                    } else if (/refresh: \d+; url=.+login.+/.test(res.responseHeaders)) {
-
-                    } else {
-                        let responseText = res.responseText;
-                        // if (label.name==="AT") {//console.log(label.name);//console.log(res.finalUrl);//console.log(res.responseHeaders);//console.log(res.responseText);}
-                        if (typeof responseText === "undefined") {
-
-                        } else if (responseText.length < 800 && /login/.test(responseText)) {
-
-                        } else {
-                            //console.log("Get Search Pages Success in Site " + site + ".");
-                            var doc = (new DOMParser()).parseFromString(res.responseText, 'text/html');
-                            var body = doc.querySelector("body");
-                            var page = $(body); // 构造 jQuery 对象
-                            try {
-                                //console.log('trying', site);
-                                parser_func(res, doc, body, page);
-                                //console.log("End of Search in Site " + site + ".");
-                            } catch (error) {
-                                //console.log("An error occurred when parser in Site " + site + ". With Error information: " + error + ". Please opening a issues to report at https://github.com/Rhilip/PT-help/issues/2");
-                            }
-                        }
-                    }
-                },
-                onerror: function (res) {
-                    //console.log("An error occurred when searching in Site " + site + " .With finalUrl: " + res.finalUrl + ". Your computer may not be able to access this site.");
-                }
-            });
-        }
+        
 
         if ($('#content div.' + group + '-body ul a.' + site).attr('stat') == 'true') return;
 
@@ -620,8 +620,8 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                     let title = title_en = $('#content > h1 > span')[0].textContent.split(' ');
                     title = title.shift();
                     title_en = title_en.join(' ').trim();
-                    getDoc('http://predb.me/?search=' +title_en ,null, function (doc,res, meta) {
-                        
+                    getDoc('http://predb.me/?search=' + title_en, null, function (doc, res, meta) {
+
                         var PreDB_div = $('<div class="direct_link" id="subject-doulist"> <h2 style="margin:0"> <i class="">PreDB查询</i> · · · · · ·<br><span class="pl"> </span> </h2> <ul> </ul> </div>');
                         $('#content div.aside').prepend(PreDB_div);
 
@@ -629,17 +629,19 @@ if (!document.getElementById("seBwhA") && "页面不存在" !== document.title) 
                         if (res.responseText.match(/Nothing found/)) {
                             let link_div = $(`<li> <a href="http://predb.me/?search=${title_en}">没有找到任何资源</a> <span>(点这手动搜索)</span> </li>`);
                             $('div.direct_link ul').append(link_div);
-                        }else{
-                            for (var i=0;i<Math.min(parseInt($('span.release-count',doc).text()),3);i++){
-                                let PDBTitle=$(`div.post:eq(${i})`,doc).find('.p-c-title a').text();
-                                let PDBId=$(`div.post:eq(${i})`,doc).attr('id');
-                                let PDBDate=$(`div.post:eq(${i})`,doc).find('.p-c-time .t-d').text();
+                        } else {
+                            for (var i = 0; i < Math.min(parseInt($('span.release-count', doc).text()), 3); i++) {
+                                let PDBTitle = $(`div.post:eq(${i})`, doc).find('.p-c-title a').text();
+                                let PDBId = $(`div.post:eq(${i})`, doc).attr('id');
+                                let PDBDate = $(`div.post:eq(${i})`, doc).find('.p-c-time .t-d').text();
                                 let link_div = $(`<li> <a href="http://predb.me/?post=${PDBId}">${PDBTitle}</a> <span>(${PDBDate})</span> </li>`);
-                                $('div.direct_link ul').append(link_div);  
+                                $('div.direct_link ul').append(link_div);
+
+                               
                             }
                         }
 
-                    
+
                     })
                 }
             }

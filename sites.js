@@ -180,9 +180,9 @@ var sitesOnline = {
             }
         }
     },
-    "torrentsite":{
-        "name":"BT磁力",
-        "sites":{
+    "torrentsite": {
+        "name": "BT磁力",
+        "sites": {
             "torrentz2": {
                 "title": "https://torrentz2.eu/search?f=",
                 "selector": "div.results dl"
