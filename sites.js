@@ -1,4 +1,4 @@
-{
+var sitesOnline = {
     "offlinesite": {
         "name": "公网资源",
         "sites": {

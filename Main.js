@@ -14,6 +14,7 @@
 // @grant          GM_listValues
 // @require        http://cdn.bootcss.com/jquery/3.2.1/jquery.min.js
 // @require        https://cdn.bootcss.com/jqueryui/1.12.1/jquery-ui.min.js
+// @require        https://raw.githubusercontent.com/Exhen/douban-movie-helper/master/sites.js
 // @resource       icon_off https://raw.githubusercontent.com/Exhen/douban-movie-helper/master/off.png
 // @resource       icon_on https://raw.githubusercontent.com/Exhen/douban-movie-helper/master/on.png
 // @include        https://movie.douban.com/
@@ -23,7 +24,7 @@
 // @version        test
 // @run-at         document-start
 // @namespace      exhen_js
-
+// @updateURL      https://greasyfork.org/scripts/36866/code/user.js
 // ==/UserScript==
 
 var myScriptStyle = document.createElement("style");
@@ -1608,8 +1609,8 @@ var updateSites = function (forceFlag) {
             if (doc) {
                 console.log('sites updated!')
                 GM_setValue('lastUpdate', now.getTime());
-                sitesOnline=doc;
                 GM_setValue('sitesOnline', doc);
+                location.reload();
             } else {
                 console.log('updating sites error!')
             }
@@ -2061,10 +2062,11 @@ var updateSites = function (forceFlag) {
     }
 }
 
-var sitesOnline=GM_getValue('sitesOnline');
-updateSites(true);
+var sitesOnline=GM_getValue('sitesOnline','');
+if(sitesOnline==''){
+    updateSites(true);
+}
 
-console.log(sitesOnline.offlinesite.name)
 // update_sites_list();
 var sites_list = GM_getValue('sites_list', 'none');
 console.log(sites_list);
